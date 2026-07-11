@@ -766,3 +766,42 @@
   font-size: 0.85em;
   font-weight: 400;
 }
+
+/* ── Print styles (shell chrome) ──────────────────────────── */
+@media print {
+  .sidebar,
+  .sidebar__handle,
+  .topbar,
+  .topbar__crumbs,
+  .doc-actions,
+  .doc-state,
+  .doc-action,
+  .toggle-map,
+  .doc-scroller,
+  .doc-scroller__track,
+  .doc-scroller__arrow,
+  .doc-chip,
+  .doc-chip--new,
+  .options-drawer,
+  .options-drawer__handle,
+  .options-panel,
+  .options-section,
+  .app__main {
+    display: none !important;
+  }
+
+  .app {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .document-view {
+    display: block !important;
+    min-height: 0 !important;
+  }
+
+  .doc-layout {
+    display: block !important;
+  }
+}

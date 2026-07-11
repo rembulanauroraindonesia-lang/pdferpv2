@@ -4,6 +4,7 @@
  */
 import { signatories } from "@/data/signatories";
 import type { Signatory } from "@/types/schema";
+import { saveSignatoryToDB } from "@/lib/persist";
 
 export interface SignatureStore {
   list: Signatory[];
@@ -54,6 +55,8 @@ export function signatureStore(): SignatureStore {
       const d = this.draft;
       if (!d.name.trim() || !d.role.trim()) return;
 
+      let updatedSig: Signatory;
+
       if (this.editing) {
         const idx = this.list.findIndex((s) => s.id === this.editing!.id);
         if (idx === -1) return;
@@ -62,16 +65,20 @@ export function signatureStore(): SignatureStore {
           role: d.role.trim(),
           signature_file: d.signature_file.trim() || undefined,
         });
+        updatedSig = this.list[idx];
       } else {
         const newId = "si_new_" + Date.now();
-        this.list.push({
+        updatedSig = {
           id: newId,
           name: d.name.trim(),
           role: d.role.trim(),
           is_active: true,
           signature_file: d.signature_file.trim() || undefined,
-        });
+        };
+        this.list.push(updatedSig);
       }
+      // Persist to PocketBase (fire-and-forget)
+      saveSignatoryToDB(updatedSig);
       this.closeModal();
     },
 

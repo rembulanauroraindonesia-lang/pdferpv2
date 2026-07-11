@@ -70,6 +70,7 @@ export type DocBodyComponent = Partial<AlpineComponent> & {
   setDate(iso: string): void;
   setParty(partyId: string): void;
   setDelivery(term: "Franco" | "Locco"): void;
+  init(): void;
   openPricing(line: unknown): void;
 };
 export function docBody(docId: string): DocBodyComponent {
@@ -275,11 +276,21 @@ export function docBody(docId: string): DocBodyComponent {
     },
     // Open the pricing calculator for a given line. Finds the calc element
     // (sibling x-data) and calls its show() with the line context.
+    init() {
+      this.$el?.addEventListener('pricing-applied', (() => {
+        const data = (window as any).__pricingApply;
+        if (!data) return;
+        const line = this.lines.find(l => l.id === data.lineId);
+        if (line) {
+          line.pricing = data.pricing;
+          line.unit_price = data.unitPrice;
+          this.$store?.doc.touch();
+        }
+        delete (window as any).__pricingApply;
+      }) as EventListener);
+    },
     openPricing(line: unknown) {
-      const root = this.$el?.closest("[x-data^='docBody']") as HTMLElement | null;
-      const calcEl = root?.querySelector("[x-data^='pricingCalculator']") as (HTMLElement & { _x_dataStack?: any[] }) | null;
-      const calcData = calcEl?._x_dataStack?.[0];
-      if (calcData && typeof calcData.show === "function") calcData.show(line);
+      this.$dispatch?.('open-pricing', { line });
     },
   };
 }

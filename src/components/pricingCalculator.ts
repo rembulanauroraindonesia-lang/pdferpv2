@@ -55,6 +55,7 @@ export type PricingCalculatorComponent = Partial<AlpineComponent> & {
   readonly kgActive: boolean;
   readonly unitActive: boolean;
   // methods
+  init(): void;
   show(line: any): void;
   close(): void;
   setMode(mode: "kg" | "unit"): void;
@@ -102,6 +103,11 @@ export function pricingCalculator(): PricingCalculatorComponent {
     get kgActive(): boolean { return this.priceMode === "kg"; },
     get unitActive(): boolean { return this.priceMode === "unit"; },
 
+    init() {
+      this.$el?.addEventListener('open-pricing', ((e: CustomEvent) => {
+        this.show(e.detail.line);
+      }) as EventListener);
+    },
     show(line: any) {
       this.lineId = line.id;
       this.itemName = line.item_name || "";
@@ -188,23 +194,16 @@ export function pricingCalculator(): PricingCalculatorComponent {
     },
 
     apply() {
-      const line = this.$el?.closest("[x-data^='docBody']") as HTMLElement | null;
-      if (!line) return;
-      const data = (line as any)._x_dataStack?.[0];
-      if (!data) return;
-      const targetLine = data.lines.find((l: any) => l.id === this.lineId);
-      if (!targetLine) return;
-
+      const wrapper = this.$el?.closest('.doc-body-wrap');
+      if (!wrapper) return;
       const lp = toLinePricing(
         this.lineId,
         this as unknown as PricingInput,
         { id: this.selectedSupplierId, name: this.selectedSupplierName },
       );
-      targetLine.pricing = lp;
-      targetLine.unit_price = this.sell_per_unit;
+      (window as any).__pricingApply = { lineId: this.lineId, pricing: lp, unitPrice: this.sell_per_unit };
+      wrapper.dispatchEvent(new CustomEvent('pricing-applied', { bubbles: true }));
       this.close();
-      this.$store?.doc.touch();
-      this.$dispatch?.("pricing-applied", { lineId: this.lineId });
     },
   };
 }

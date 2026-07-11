@@ -46,6 +46,10 @@ import { termsByDocument } from "@/data/terms";
 import { staff } from "@/data/staff";
 import { calcTotals } from "@/lib/calc";
 import { formatNumber, formatRupiah, formatMoney, formatDateID, statusMeta, parseMoneyInput } from "@/lib/format";
+import { initRouter, updateHash } from "@/lib/router";
+import { initDB } from "@/lib/db";
+import { seedIfNeeded } from "@/lib/seed";
+import { loadFromDB } from "@/lib/persist";
 
 declare global {
   interface Window {
@@ -73,6 +77,7 @@ const ERP = {
   documents, documentsByType, documentById: getDoc,
   linesByDocument, partyById, companyById, signatoryById, termsByDocument,
   staff,
+  updateHash,
 };
 window.ERP = ERP;
 
@@ -136,3 +141,19 @@ htmx.on("htmx:afterSettle", (evt: any) => {
 })();
 
 // Initial body load is handled by x-effect="loadBody()" on .document-view.
+
+// ── Hash-based routing ────────────────────────────────────────
+initRouter();
+
+// ── PocketBase initialization (non-blocking, graceful degradation) ─
+(async () => {
+  const connected = await initDB();
+  if (connected) {
+    await seedIfNeeded();
+    await loadFromDB();
+    // Re-sync the doc store with freshly loaded data
+    const store = Alpine.store("doc") as unknown as DocStore;
+    const current = documentById(store.currentId);
+    if (current) store.syncFromDoc(current);
+  }
+})();

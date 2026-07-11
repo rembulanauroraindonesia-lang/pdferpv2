@@ -19,6 +19,8 @@ import type { DocumentLine } from "@/types/schema";
 import { partyById } from "@/data/parties";
 import { staffById } from "@/data/staff";
 import { nextDocNo } from "@/lib/docNo";
+import { updateHash } from "@/lib/router";
+import { saveCurrentDoc } from "@/lib/persist";
 
 // Subject + salutation per document type. Used by addNew() and shown on
 // each doc's header. Direction-aware: BELI flows are addressed to the
@@ -205,6 +207,7 @@ export function docStore(): DocStore {
         this.pageLayout = doc.page_layout;
         this.syncFromDoc(doc);
       }
+      updateHash(this.type, this.direction, id);
     },
     setLayout(layout: PageLayout) {
       this.pageLayout = layout;
@@ -222,6 +225,7 @@ export function docStore(): DocStore {
       this.komisi = 0;
       this.ppnIncluded = true;
       this.marketingStaffId = "";
+      updateHash(type, direction, this.currentId);
       const first = documentsByType(type)[0];
       if (first) this.setCurrent(first.id);
     },
@@ -239,6 +243,8 @@ export function docStore(): DocStore {
       doc.saved_at = new Date().toISOString();
       this.isRevising = false;
       this.syncFromDoc(doc);
+      // Persist to PocketBase (fire-and-forget)
+      saveCurrentDoc(this.currentId);
     },
     revise() {
       const doc = documentById(this.currentId);

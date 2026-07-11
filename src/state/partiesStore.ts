@@ -4,6 +4,7 @@
  */
 import { parties } from "@/data/parties";
 import type { Party } from "@/types/schema";
+import { savePartyToDB } from "@/lib/persist";
 
 export interface PartiesStore {
   list: Party[];
@@ -57,6 +58,8 @@ export function partiesStore(): PartiesStore {
       const d = this.draft;
       if (!d.name.trim()) return;
 
+      let updatedParty: Party;
+
       if (this.editing) {
         // Update existing
         const idx = this.list.findIndex((p) => p.id === this.editing!.id);
@@ -70,10 +73,11 @@ export function partiesStore(): PartiesStore {
           bank_account: d.bank_account.trim(),
           bank_account_name: d.bank_account_name.trim(),
         });
+        updatedParty = this.list[idx];
       } else {
         // Add new
         const newId = "pa_new_" + Date.now();
-        this.list.push({
+        updatedParty = {
           id: newId,
           name: d.name.trim(),
           address: d.address.trim(),
@@ -83,8 +87,11 @@ export function partiesStore(): PartiesStore {
           bank_account: d.bank_account.trim() || undefined,
           bank_account_name: d.bank_account_name.trim() || undefined,
           is_active: true,
-        });
+        };
+        this.list.push(updatedParty);
       }
+      // Persist to PocketBase (fire-and-forget)
+      savePartyToDB(updatedParty);
       this.closeModal();
     },
 

@@ -1,18 +1,328 @@
 <!--
-  PARTIAL BODY: payment.html  (stub, body-only)
+  PARTIAL BODY: payment.html
   ----------------------------------------------------------------------------
-  Same master contract as quotation.html: an <article class="page">.
+  Bukti Pembayaran — letter format (mirrors invoice.html structure).
+  Mencatat pembayaran untuk invoice/PO.
 -->
-<article class="page">
-  <section class="stub region" data-map="payments">
-    <span class="db-tag db-tag--block">payments · collection baru</span>
-    <div class="stub__icon">¥</div>
-    <div class="stub__title">Pembayaran</div>
-    <div class="stub__hint">
-      Bukti &amp; rekonsiliasi pembayaran.<br />
-      Collection baru <code>payments</code>: <code>amount</code>, <code>method</code>,
-      <code>paid_at</code>, <code>proof_image</code>.<br />
-      Relasi: <code>document_id → documents</code>, <code>bank_account_id → bank_accounts</code>.
-    </div>
+<div class="doc-body-wrap" x-data="docBody($store.doc.currentId)">
+
+<template x-for="(pageLines, pageIdx) in pagedLines" :key="pageIdx">
+<article class="page" :class="{ 'page--locked': $store.doc.isLocked }">
+
+  <header class="doc__head">
+      <div class="doc__head-left region" data-map="comp_logo">
+        <span class="db-tag">comp_logo · companies</span>
+        <img class="doc__logo" src="/logo.jpg" alt="Logo PT Rembulan Aurora Indonesia" />
+        <div class="doc__issuer">
+          <div class="doc__issuer-name" x-text="company?.name"></div>
+          <div class="field-row">
+            <span class="field field--multiline"
+                  contenteditable="true"
+                  data-field="address"
+                  x-effect="editing.address ? null : ($el.innerText = companyDraft?.address || '')"
+                  @focus="startEdit('address')"
+                  @input="companyDraft.address = $event.target.innerText"
+                  @blur="cancelEdit('address')"></span>
+            <button x-show="editing.address" x-cloak class="default-pill"
+                    @mousedown.prevent="commitDefault('address')" x-transition>↺</button>
+          </div>
+          <div class="doc__contact-row">
+            <div class="field-row field-row--inline">
+              <span class="field-label">Tel:</span>
+              <span class="field" contenteditable="true" data-field="phone"
+                    x-effect="editing.phone ? null : ($el.innerText = companyDraft?.phone || '')"
+                    @focus="startEdit('phone')"
+                    @input="companyDraft.phone = $event.target.innerText"
+                    @blur="cancelEdit('phone')"></span>
+              <button x-show="editing.phone" x-cloak class="default-pill"
+                      @mousedown.prevent="commitDefault('phone')" x-transition>↺</button>
+            </div>
+            <div class="field-row field-row--inline">
+              <span class="field-label">Email:</span>
+              <span class="field" contenteditable="true" data-field="email"
+                    x-effect="editing.email ? null : ($el.innerText = companyDraft?.email || '')"
+                    @focus="startEdit('email')"
+                    @input="companyDraft.email = $event.target.innerText"
+                    @blur="cancelEdit('email')"></span>
+              <button x-show="editing.email" x-cloak class="default-pill"
+                      @mousedown.prevent="commitDefault('email')" x-transition>↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="doc__head-right region" data-map="documents">
+        <span class="db-tag">documents</span>
+        <div class="doc__title">
+          <span x-text="$store.doc.docTitle"></span>
+          <small>
+            <span x-text="doc.doc_no"></span><template x-if="$store.doc.docTitleSub"><span x-text="' · ' + $store.doc.docTitleSub"></span></template><template x-if="$store.doc.revisionCount > 0"><span x-text="' r' + $store.doc.revisionCount"></span></template>
+          </small>
+        </div>
+      </div>
+    </header>
+
+  <div class="doc__toprow">
+    <section class="doc__recipient region" data-map="parties"
+             x-data="partyPicker(party)" @pick-party="setParty($event.detail)">
+      <span class="db-tag">parties</span>
+      <div class="doc__recipient-label">Kepada Yth,</div>
+      <div class="party-input-wrap">
+        <input class="field party-search" type="text"
+               data-field="party-name"
+               x-model="query"
+               placeholder="Pilih pihak..."
+               @focus="focusField()"
+               @input="buildResults()"
+               @blur="close()" />
+        <div class="pp" x-show="open && !showQuickAdd" x-transition @mousedown.prevent="" x-cloak>
+          <template x-for="r in results" :key="r.id">
+            <button class="pp__item" @mousedown.prevent="pick(r.id)">
+              <span class="pp__name" x-text="r.name"></span>
+              <span class="pp__sub" x-text="r.contact_person + (r.contact_phone ? ' · ' + r.contact_phone : '')"></span>
+            </button>
+          </template>
+          <template x-if="results.length === 0">
+            <div class="pp__empty">Tidak ada hasil untuk "<span x-text="query"></span>"</div>
+          </template>
+          <button class="pp__quickadd" @mousedown.prevent="openQuickAdd()">+ Quick Add</button>
+        </div>
+        <div class="pp qa" x-show="showQuickAdd" x-transition x-cloak>
+          <div class="qa__title">Tambah Kontak Baru</div>
+          <label class="qa__field"><span>Nama Perusahaan</span>
+            <input type="text" x-model="qaName" @keydown.enter="saveQuickAdd()" /></label>
+          <label class="qa__field"><span>Alamat Kantor</span>
+            <input type="text" x-model="qaAddress" /></label>
+          <label class="qa__field"><span>Nama PIC</span>
+            <input type="text" x-model="qaContact" /></label>
+          <label class="qa__field"><span>No. Kontak PIC</span>
+            <input type="text" x-model="qaPhone" /></label>
+          <div class="qa__actions">
+            <button class="qa__btn qa__btn--ghost" @mousedown.prevent="showQuickAdd = false">Batal</button>
+            <button class="qa__btn qa__btn--primary" @mousedown.prevent="saveQuickAdd()">Simpan</button>
+          </div>
+        </div>
+      </div>
+      <div class="party-address field" data-field="party-address" x-text="party?.address"></div>
+      <div class="party-pic-row">
+        <span class="party-pic-label">Up:</span>
+        <span class="field" data-field="party-contact" x-text="party?.contact_person"></span>
+        <span class="field party-pic-phone" data-field="party-phone" x-text="party?.contact_phone"></span>
+      </div>
+    </section>
+
+    <section class="doc__meta region" data-map="documents"
+             x-init="$data._parentDoc = ERP.documentById(doc.parent_doc_id)">
+      <span class="db-tag">documents</span>
+      <div class="doc__meta-row" x-data="datePicker(doc.date)" @set-date="setDate($event.detail)">
+        <span class="doc__meta-label">Tanggal</span>
+        <span class="field date-field" @click="toggle()" x-text="fmtDate(selected)"></span>
+        <div class="cal" x-show="open" x-transition @click.outside="open=false" x-cloak>
+          <div class="cal__head">
+            <button class="cal__nav" @click="prevMonth()" aria-label="Bulan sebelumnya">‹</button>
+            <span class="cal__title" x-text="monthLabel()"></span>
+            <button class="cal__nav" @click="nextMonth()" aria-label="Bulan berikutnya">›</button>
+          </div>
+          <div class="cal__weekdays">
+            <template x-for="w in weekDays" :key="w"><span x-text="w"></span></template>
+          </div>
+          <div class="cal__grid">
+            <template x-for="d in days" :key="d.iso">
+              <button class="cal__day"
+                      :class="{ 'cal__day--out': !d.inMonth, 'cal__day--today': d.isToday, 'cal__day--sel': d.isSelected }"
+                      @click="pick(d.iso)" x-text="d.day"></button>
+            </template>
+          </div>
+          <button class="cal__today" @click="pickToday()">Hari ini</button>
+        </div>
+      </div>
+      <template x-if="doc.parent_doc_id">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Dari</span>
+          <span class="field" x-text="_parentDoc?.doc_no"></span>
+        </div>
+      </template>
+      <template x-if="_parentDoc?.due_date">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Jatuh Tempo</span>
+          <span class="field" x-text="fmtDate(_parentDoc.due_date)"></span>
+        </div>
+      </template>
+      <template x-if="_parentDoc?.payment_method">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Syarat Bayar</span>
+          <span class="field" x-text="_parentDoc.payment_method === 'nett' && _parentDoc.payment_net_days ? 'NETT ' + _parentDoc.payment_net_days + ' Hari' : 'Cash'"></span>
+        </div>
+      </template>
+      <template x-if="doc.saved_at">
+        <div class="doc__meta-row doc__meta-row--lifecycle">
+          <span class="doc__meta-label">Disimpan</span>
+          <span class="doc__meta-stamp" x-text="fmtStamp(doc.saved_at)"></span>
+        </div>
+      </template>
+      <template x-if="doc.last_revision_at">
+        <div class="doc__meta-row doc__meta-row--lifecycle">
+          <span class="doc__meta-label">Revisi ke-<span x-text="$store.doc.revisionCount"></span></span>
+          <span class="doc__meta-stamp" x-text="fmtStamp(doc.last_revision_at)"></span>
+        </div>
+      </template>
+    </section>
+  </div>
+
+  <div class="doc__salutation field-row">
+    <span class="field field--multiline"
+          contenteditable="true"
+          data-field="salutation"
+          x-effect="editing.salutation ? null : ($el.innerText = doc?.salutation || '')"
+          @focus="startEdit('salutation')"
+          @input="doc.salutation = $event.target.innerText"
+          @blur="cancelEdit('salutation')"></span>
+    <button x-show="editing.salutation" x-cloak
+            class="default-pill"
+            @mousedown.prevent="commitDefault('salutation')"
+            x-transition>↺ Jadikan default</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  DETAIL PEMBAYARAN                                               -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <section class="doc__payment-section region" data-map="documents">
+    <span class="db-tag">documents</span>
+    <table class="doc__payment-table">
+      <tbody>
+        <!-- Referensi Invoice / Dokumen Asal -->
+        <tr>
+          <td class="doc__pay-label">Nomor Dokumen</td>
+          <td class="doc__pay-value" x-text="_parentDoc?.doc_no || '—'"></td>
+        </tr>
+        <tr>
+          <td class="doc__pay-label">Jumlah Tagihan</td>
+          <td class="doc__pay-value">
+            <span x-text="_parentDoc ? money(ERP.calcTotals(ERP.linesByDocument(_parentDoc.id)).grandTotal) : money(0)"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="doc__pay-label">Jumlah Dibayar</td>
+          <td class="doc__pay-value">
+            <input class="field num-field" type="text" inputmode="numeric"
+                   placeholder="0"
+                   x-init="$el.value = $moneyFmt(doc.payment_amount || 0)"
+                   @input="doc.payment_amount = $moneyParse($event.target.value); $store.doc.touch()"
+                   @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                   @blur="$el.value = $moneyFmt(doc.payment_amount || 0)" />
+          </td>
+        </tr>
+        <tr>
+          <td class="doc__pay-label">Metode Pembayaran</td>
+          <td class="doc__pay-value">
+            <select class="field unit-select" x-model="doc.pay_channel">
+              <option value="transfer_bank">Transfer Bank</option>
+              <option value="cash">Cash</option>
+              <option value="giro">Giro</option>
+              <option value="cek">Cek</option>
+            </select>
+          </td>
+        </tr>
+        <!-- Detail bank tujuan transfer (hanya tampil jika Transfer Bank) -->
+        <template x-if="doc.pay_channel === 'transfer_bank'">
+          <tr>
+            <td class="doc__pay-label">Bank Tujuan</td>
+            <td class="doc__pay-value">
+              <span class="doc__bank-detail">BNI</span>
+              <span class="doc__bank-detail">No. Rek: 8900011182</span>
+              <span class="doc__bank-detail">a/n PT. REMBULAN AURORA INDONESIA</span>
+            </td>
+          </tr>
+        </template>
+        <tr>
+          <td class="doc__pay-label">Tanggal Bayar</td>
+          <td class="doc__pay-value" x-data="datePicker(doc.payment_date)" @set-date="setDate($event.detail)">
+            <span class="field date-field" @click="toggle()" x-text="fmtDate(selected)"></span>
+            <div class="cal" x-show="open" x-transition @click.outside="open=false" x-cloak>
+              <div class="cal__head">
+                <button class="cal__nav" @click="prevMonth()" aria-label="Bulan sebelumnya">‹</button>
+                <span class="cal__title" x-text="monthLabel()"></span>
+                <button class="cal__nav" @click="nextMonth()" aria-label="Bulan berikutnya">›</button>
+              </div>
+              <div class="cal__weekdays">
+                <template x-for="w in weekDays" :key="w"><span x-text="w"></span></template>
+              </div>
+              <div class="cal__grid">
+                <template x-for="d in days" :key="d.iso">
+                  <button class="cal__day"
+                          :class="{ 'cal__day--out': !d.inMonth, 'cal__day--today': d.isToday, 'cal__day--sel': d.isSelected }"
+                          @click="pick(d.iso)" x-text="d.day"></button>
+                </template>
+              </div>
+              <button class="cal__today" @click="pickToday()">Hari ini</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="doc__pay-label">No. Referensi</td>
+          <td class="doc__pay-value">
+            <input class="field" type="text"
+                   x-model="doc.payment_ref"
+                   placeholder="No. bukti transfer / giro / cek" />
+          </td>
+        </tr>
+        <tr>
+          <td class="doc__pay-label">Catatan</td>
+          <td class="doc__pay-value">
+            <span class="field field--multiline"
+                  contenteditable="true"
+                  data-field="payment-notes"
+                  x-effect="editing['payment-notes'] ? null : ($el.innerText = doc?.payment_notes || '')"
+                  @focus="startEdit('payment-notes')"
+                  @input="doc.payment_notes = $event.target.innerText"
+                  @blur="cancelEdit('payment-notes')"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </section>
+
+  <template x-if="pageIdx === pageCount - 1">
+    <div>
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <!--  INFORMASI REKENING PERUSAHAAN                               -->
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <section class="doc__bank-info region" data-map="bank_accounts">
+        <span class="db-tag">bank_accounts</span>
+        <table class="doc__bank-table">
+          <tr>
+            <td class="doc__bank-label">Bank</td>
+            <td class="doc__bank-val">: BNI</td>
+          </tr>
+          <tr>
+            <td class="doc__bank-label">No. Rekening</td>
+            <td class="doc__bank-val">: 8900011182</td>
+          </tr>
+          <tr>
+            <td class="doc__bank-label">Atas Nama</td>
+            <td class="doc__bank-val">: PT. REMBULAN AURORA INDONESIA</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <!--  TANDA TANGAN                                                 -->
+      <!-- ═════════════════════════════════════════════════════════════ -->
+      <div class="doc__signoff region" data-map="signatories">
+        <span class="db-tag">signatories</span>
+        <p>Demikian Bukti Pembayaran ini kami buat dengan sebenarnya.</p>
+        <div class="doc__signatures">
+          <!-- Finance — dari master data signature -->
+          <div class="doc__signature" x-data="{ sig: $store.signatures.byRole('Finance') }">
+            <p>Hormat kami,</p>
+            <div class="sig-box"></div>
+            <div class="sig-name" x-text="sig?.name"></div>
+            <div class="sig-role" x-text="sig?.role"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
 </article>
+</template>
+</div>

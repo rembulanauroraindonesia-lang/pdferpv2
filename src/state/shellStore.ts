@@ -5,6 +5,7 @@
 
 import { staff } from "@/data/staff";
 import type { DocDirection } from "@/types/schema";
+import { updateHash } from "@/lib/router";
 
 export interface ShellStore {
   mapOn: boolean;
@@ -33,6 +34,7 @@ export function shellStore(): ShellStore {
     setActive(view: string, direction: DocDirection) {
       this.activeView = view;
       this.activeDirection = direction;
+      updateHash(view, direction, "");
       const key = `${view}_${direction}`;
       document.querySelectorAll(".nav__link").forEach((el) => {
         const elKey = `${el.getAttribute("data-view")}_${el.getAttribute("data-direction")}`;
