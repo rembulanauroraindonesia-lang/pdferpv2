@@ -1,0 +1,57 @@
+{
+  "name": "bank_accounts",
+  "type": "base",
+  "schema": [
+    {
+      "name": "bank_name",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "account_number",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "account_name",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 255 }
+    },
+    {
+      "name": "branch",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 100 }
+    },
+    {
+      "name": "swift_code",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 20 }
+    },
+    {
+      "name": "currency",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 5 }
+    },
+    {
+      "name": "is_default",
+      "type": "bool",
+      "required": false,
+      "options": {}
+    }
+  ],
+  "indexes": [
+    "CREATE INDEX idx_bankacc_bank ON bank_accounts (bank_name)",
+    "CREATE INDEX idx_bankacc_default ON bank_accounts (is_default)"
+  ],
+  "listRule": "",
+  "viewRule": "",
+  "createRule": "",
+  "updateRule": "",
+  "deleteRule": ""
+}

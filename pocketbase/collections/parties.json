@@ -1,0 +1,90 @@
+{
+  "name": "parties",
+  "type": "base",
+  "schema": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 255 }
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 500 }
+    },
+    {
+      "name": "contact_person",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 100 }
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "required": false,
+      "options": { "exceptDomains": [] }
+    },
+    {
+      "name": "npwp",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "notes",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 2000 }
+    },
+    {
+      "name": "type",
+      "type": "select",
+      "required": true,
+      "options": {
+        "values": ["customer", "supplier", "both"]
+      }
+    },
+    {
+      "name": "bank_name",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "bank_account",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "bank_account_name",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 255 }
+    },
+    {
+      "name": "is_active",
+      "type": "bool",
+      "required": false,
+      "options": {}
+    }
+  ],
+  "indexes": [
+    "CREATE INDEX idx_parties_name ON parties (name)",
+    "CREATE INDEX idx_parties_type ON parties (type)",
+    "CREATE INDEX idx_parties_active ON parties (is_active)"
+  ],
+  "listRule": "",
+  "viewRule": "",
+  "createRule": "",
+  "updateRule": "",
+  "deleteRule": ""
+}

@@ -1,0 +1,33 @@
+{
+  "name": "terms",
+  "type": "base",
+  "schema": [
+    {
+      "name": "document_id",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "seq",
+      "type": "number",
+      "required": true,
+      "options": { "min": 1, "max": 99 }
+    },
+    {
+      "name": "body",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 2000 }
+    }
+  ],
+  "indexes": [
+    "CREATE INDEX idx_terms_document ON terms (document_id)",
+    "CREATE INDEX idx_terms_doc_seq ON terms (document_id, seq)"
+  ],
+  "listRule": "",
+  "viewRule": "",
+  "createRule": "",
+  "updateRule": "",
+  "deleteRule": ""
+}

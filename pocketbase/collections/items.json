@@ -1,0 +1,52 @@
+{
+  "name": "items",
+  "type": "base",
+  "schema": [
+    {
+      "name": "code",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 500 }
+    },
+    {
+      "name": "category",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 100 }
+    },
+    {
+      "name": "unit",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 30 }
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 2000 }
+    },
+    {
+      "name": "notes",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 2000 }
+    }
+  ],
+  "indexes": [
+    "CREATE UNIQUE INDEX idx_items_code ON items (code) WHERE code != ''",
+    "CREATE INDEX idx_items_name ON items (name)",
+    "CREATE INDEX idx_items_category ON items (category)"
+  ],
+  "listRule": "",
+  "viewRule": "",
+  "createRule": "",
+  "updateRule": "",
+  "deleteRule": ""
+}

@@ -1,0 +1,79 @@
+{
+  "name": "document_lines",
+  "type": "base",
+  "schema": [
+    {
+      "name": "document",
+      "type": "relation",
+      "required": true,
+      "options": {
+        "collectionId": "{{DOCUMENTS_COLLECTION_ID}}",
+        "maxSelect": 1,
+        "displayFields": ["doc_no", "type"]
+      }
+    },
+    {
+      "name": "line_no",
+      "type": "number",
+      "required": true,
+      "options": { "min": 1, "max": 999 }
+    },
+    {
+      "name": "item_code",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "item_name",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 500 }
+    },
+    {
+      "name": "qty",
+      "type": "number",
+      "required": true,
+      "options": { "min": 0 }
+    },
+    {
+      "name": "unit",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 30 }
+    },
+    {
+      "name": "unit_price",
+      "type": "number",
+      "required": true,
+      "options": { "min": 0 }
+    },
+    {
+      "name": "buy_per_unit",
+      "type": "number",
+      "required": false,
+      "options": { "min": 0 }
+    },
+    {
+      "name": "discount_pct",
+      "type": "number",
+      "required": false,
+      "options": { "min": 0, "max": 100 }
+    },
+    {
+      "name": "line_total",
+      "type": "number",
+      "required": false,
+      "options": { "min": 0 }
+    }
+  ],
+  "indexes": [
+    "CREATE INDEX idx_doclines_document ON document_lines (document)",
+    "CREATE INDEX idx_doclines_doc_line ON document_lines (document, line_no)"
+  ],
+  "listRule": "",
+  "viewRule": "",
+  "createRule": "",
+  "updateRule": "",
+  "deleteRule": ""
+}

@@ -1,0 +1,43 @@
+{
+  "name": "signatories",
+  "type": "base",
+  "schema": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 100 }
+    },
+    {
+      "name": "role",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "is_active",
+      "type": "bool",
+      "required": false,
+      "options": {}
+    },
+    {
+      "name": "signature_file",
+      "type": "file",
+      "required": false,
+      "options": {
+        "maxSelect": 1,
+        "maxSize": 5242880,
+        "mimeTypes": ["image/png", "image/jpeg", "image/svg+xml"]
+      }
+    }
+  ],
+  "indexes": [
+    "CREATE INDEX idx_signatories_role ON signatories (role)",
+    "CREATE INDEX idx_signatories_active ON signatories (is_active)"
+  ],
+  "listRule": "",
+  "viewRule": "",
+  "createRule": "",
+  "updateRule": "",
+  "deleteRule": ""
+}

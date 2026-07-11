@@ -1,0 +1,120 @@
+{
+  "name": "documents",
+  "type": "base",
+  "schema": [
+    {
+      "name": "doc_no",
+      "type": "text",
+      "required": true,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "type",
+      "type": "select",
+      "required": true,
+      "options": {
+        "values": [
+          "quotation",
+          "sales_order",
+          "proforma_invoice",
+          "delivery",
+          "pickup",
+          "invoice",
+          "po",
+          "payment"
+        ]
+      }
+    },
+    {
+      "name": "direction",
+      "type": "select",
+      "required": true,
+      "options": {
+        "values": ["jual", "beli"]
+      }
+    },
+    {
+      "name": "status",
+      "type": "select",
+      "required": true,
+      "options": {
+        "values": [
+          "draft",
+          "sent",
+          "confirmed",
+          "invoiced",
+          "paid",
+          "cancelled"
+        ]
+      }
+    },
+    {
+      "name": "revision_count",
+      "type": "number",
+      "required": true,
+      "options": { "min": 0, "max": 3 }
+    },
+    {
+      "name": "parent_id",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "issue_date",
+      "type": "date",
+      "required": true,
+      "options": {}
+    },
+    {
+      "name": "due_date",
+      "type": "date",
+      "required": false,
+      "options": {}
+    },
+    {
+      "name": "party",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 50 }
+    },
+    {
+      "name": "payment_terms",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 100 }
+    },
+    {
+      "name": "shipping_address",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 500 }
+    },
+    {
+      "name": "notes",
+      "type": "text",
+      "required": false,
+      "options": { "maxSize": 5000 }
+    },
+    {
+      "name": "data",
+      "type": "editor",
+      "required": false,
+      "options": { "maxSize": 0 }
+    }
+  ],
+  "indexes": [
+    "CREATE UNIQUE INDEX idx_documents_doc_no ON documents (doc_no)",
+    "CREATE INDEX idx_documents_type ON documents (type)",
+    "CREATE INDEX idx_documents_status ON documents (status)",
+    "CREATE INDEX idx_documents_direction ON documents (direction)",
+    "CREATE INDEX idx_documents_parent ON documents (parent_id)",
+    "CREATE INDEX idx_documents_party ON documents (party)",
+    "CREATE INDEX idx_documents_date ON documents (issue_date)"
+  ],
+  "listRule": "",
+  "viewRule": "",
+  "createRule": "",
+  "updateRule": "",
+  "deleteRule": ""
+}
