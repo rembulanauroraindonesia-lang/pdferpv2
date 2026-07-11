@@ -1,0 +1,105 @@
+/* ============================================================================
+   BASE — reset + shared element styles
+   ============================================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Hide Alpine templates until initialized (prevents flash of {{ }} / pills) */
+[x-cloak] { display: none !important; }
+
+html, body, h1, h2, h3, h4, p, ul, ol, table, figure {
+  margin: 0;
+  padding: 0;
+}
+
+ul, ol { list-style: none; }
+
+html {
+  font-size: var(--t-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--c-ink);
+  background: var(--c-bg);
+  line-height: 1.45;
+}
+
+/* Tabular figures everywhere we show money/qty — columns align. */
+.tnum, table, .num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+a { color: var(--c-accent); text-decoration: none; }
+a:hover { color: var(--c-accent-2); }
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+input, textarea, select, [contenteditable] {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-accent-2);
+  outline-offset: 1px;
+}
+
+/* ── Editable-field affordance ─────────────────────────────────
+   Inputs that look like text until focused/hovered. When the DB-map
+   overlay is on, every .field gets a bracket annotation. */
+.field {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-1);
+  padding: 1px 4px;
+  margin: -1px -4px;
+  transition: border-color 0.12s, background 0.12s;
+  min-width: 1ch;
+}
+.field:hover {
+  border-color: var(--c-line);
+  background: var(--c-surface-2);
+}
+.field:focus {
+  border-color: var(--c-accent-2);
+  background: var(--c-surface);
+  outline: none;
+}
+
+/* ── Badge (status pill) ─────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--tone-neutral-bg);
+  color: var(--tone-neutral-fg);
+}
+.badge[data-tone="info"]    { background: var(--tone-info-bg);    color: var(--tone-info-fg); }
+.badge[data-tone="success"] { background: var(--tone-success-bg); color: var(--tone-success-fg); }
+.badge[data-tone="danger"]  { background: var(--tone-danger-bg);  color: var(--tone-danger-fg); }
+.badge::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

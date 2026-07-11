@@ -1,0 +1,488 @@
+<!--
+  PARTIAL BODY: sales-order.html  (swapped into #doc-body by htmx)
+  ----------------------------------------------------------------------------
+  Internal Sales Order — form-like, internal-use document.
+  No salutation, no T&C, no signatures.
+  Hubungkan Dokumen + Upload PO moved to Opsi panel (index.html).
+  Linking a quotation loads ALL data: customer, items, shipping, marketing, jatuh tempo.
+-->
+<div class="doc-body-wrap" x-data="docBody($store.doc.currentId)">
+<template x-for="(pageLines, pageIdx) in pagedLines" :key="pageIdx">
+<article class="page" :class="{ 'page--locked': $store.doc.isLocked }">
+
+  <!-- ════════════════ HEADER ════════════════ -->
+  <header class="doc__head">
+    <div class="doc__head-left region" data-map="comp_logo">
+      <span class="db-tag">comp_logo · companies</span>
+      <img class="doc__logo" src="/logo.jpg" alt="Logo PT Rembulan Aurora Indonesia" />
+      <div class="doc__issuer">
+        <div class="doc__issuer-name" x-text="company?.name"></div>
+        <div class="field-row">
+          <span class="field field--multiline" contenteditable="true" data-field="address"
+                x-effect="editing.address ? null : ($el.innerText = companyDraft?.address || '')"
+                @focus="startEdit('address')" @input="companyDraft.address = $event.target.innerText"
+                @blur="cancelEdit('address')"></span>
+          <button x-show="editing.address" x-cloak class="default-pill"
+                  @mousedown.prevent="commitDefault('address')" x-transition>↺</button>
+        </div>
+        <div class="doc__contact-row">
+          <div class="field-row field-row--inline">
+            <span class="field-label">Tel:</span>
+            <span class="field" contenteditable="true" data-field="phone"
+                  x-effect="editing.phone ? null : ($el.innerText = companyDraft?.phone || '')"
+                  @focus="startEdit('phone')" @input="companyDraft.phone = $event.target.innerText"
+                  @blur="cancelEdit('phone')"></span>
+            <button x-show="editing.phone" x-cloak class="default-pill"
+                    @mousedown.prevent="commitDefault('phone')" x-transition>↺</button>
+          </div>
+          <div class="field-row field-row--inline">
+            <span class="field-label">Email:</span>
+            <span class="field" contenteditable="true" data-field="email"
+                  x-effect="editing.email ? null : ($el.innerText = companyDraft?.email || '')"
+                  @focus="startEdit('email')" @input="companyDraft.email = $event.target.innerText"
+                  @blur="cancelEdit('email')"></span>
+            <button x-show="editing.email" x-cloak class="default-pill"
+                    @mousedown.prevent="commitDefault('email')" x-transition>↺</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doc__head-right region" data-map="documents">
+      <span class="db-tag">documents</span>
+      <div class="doc__title">
+        <span x-text="$store.doc.docTitle"></span>
+        <small>
+          <span x-text="doc.doc_no"></span><template x-if="$store.doc.revisionCount > 0"><span x-text="' r' + $store.doc.revisionCount"></span></template>
+        </small>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════ FORM BODY (page 1 only) ════════════════ -->
+  <template x-if="pageIdx === 0">
+    <div class="so-form">
+
+      <!-- ── Customer + Doc Info ── -->
+      <div class="so-form__row so-form__row--2col">
+        <section class="so-field region" data-map="parties"
+                 x-data="partyPicker(party)" @pick-party="setParty($event.detail)">
+          <span class="db-tag">parties</span>
+          <label class="so-field__label">Customer</label>
+          <div class="party-input-wrap">
+            <input class="field party-search" type="text" data-field="party-name"
+                   x-model="query" placeholder="Pilih customer..."
+                   @focus="focusField()" @input="buildResults()" @blur="close()" />
+            <div class="pp" x-show="open && !showQuickAdd" x-transition @mousedown.prevent="" x-cloak>
+              <template x-for="r in results" :key="r.id">
+                <button class="pp__item" @mousedown.prevent="pick(r.id)">
+                  <span class="pp__name" x-text="r.name"></span>
+                  <span class="pp__sub" x-text="r.contact_person + (r.contact_phone ? ' · ' + r.contact_phone : '')"></span>
+                </button>
+              </template>
+              <template x-if="results.length === 0">
+                <div class="pp__empty">Tidak ada hasil untuk "<span x-text="query"></span>"</div>
+              </template>
+              <button class="pp__quickadd" @mousedown.prevent="openQuickAdd()">+ Quick Add</button>
+            </div>
+            <div class="pp qa" x-show="showQuickAdd" x-transition x-cloak>
+              <div class="qa__title">Tambah Customer Baru</div>
+              <label class="qa__field"><span>Nama Perusahaan</span>
+                <input type="text" x-model="qaName" @keydown.enter="saveQuickAdd()" /></label>
+              <label class="qa__field"><span>Alamat Kantor</span>
+                <input type="text" x-model="qaAddress" /></label>
+              <label class="qa__field"><span>Nama PIC</span>
+                <input type="text" x-model="qaContact" /></label>
+              <label class="qa__field"><span>No. Kontak PIC</span>
+                <input type="text" x-model="qaPhone" /></label>
+              <div class="qa__actions">
+                <button class="qa__btn qa__btn--ghost" @mousedown.prevent="showQuickAdd = false">Batal</button>
+                <button class="qa__btn qa__btn--primary" @mousedown.prevent="saveQuickAdd()">Simpan</button>
+              </div>
+            </div>
+          </div>
+          <div class="party-address field" data-field="party-address" x-text="party?.address"></div>
+          <div class="party-pic-row">
+            <span class="party-pic-label">Up:</span>
+            <span class="field" data-field="party-contact" x-text="party?.contact_person"></span>
+            <span class="field party-pic-phone" data-field="party-phone" x-text="party?.contact_phone"></span>
+          </div>
+        </section>
+
+        <section class="so-field region" data-map="documents">
+          <span class="db-tag">documents</span>
+          <div class="doc__meta-row" x-data="datePicker(doc.date)" @set-date="setDate($event.detail)">
+            <span class="doc__meta-label">Tanggal</span>
+            <span class="field date-field" @click="toggle()" x-text="fmtDate(selected)"></span>
+            <div class="cal" x-show="open" x-transition @click.outside="open=false" x-cloak>
+              <div class="cal__head">
+                <button class="cal__nav" @click="prevMonth()">‹</button>
+                <span class="cal__title" x-text="monthLabel()"></span>
+                <button class="cal__nav" @click="nextMonth()">›</button>
+              </div>
+              <div class="cal__weekdays">
+                <template x-for="w in weekDays" :key="w"><span x-text="w"></span></template>
+              </div>
+              <div class="cal__grid">
+                <template x-for="d in days" :key="d.iso">
+                  <button class="cal__day"
+                          :class="{ 'cal__day--out': !d.inMonth, 'cal__day--today': d.isToday, 'cal__day--sel': d.isSelected }"
+                          @click="pick(d.iso)" x-text="d.day"></button>
+                </template>
+              </div>
+              <button class="cal__today" @click="pickToday()">Hari ini</button>
+            </div>
+          </div>
+          <div class="doc__meta-row">
+            <span class="doc__meta-label">Perihal</span>
+            <span class="field" contenteditable="true" data-field="subject"
+                  x-effect="editing.subject ? null : ($el.innerText = doc?.subject || '')"
+                  @focus="startEdit('subject')" @input="doc.subject = $event.target.innerText"
+                  @blur="cancelEdit('subject')"></span>
+          </div>
+          <template x-if="$store.doc.linkQuotationId">
+            <div class="doc__meta-row">
+              <span class="doc__meta-label">Dari</span>
+              <span class="field" x-text="$store.doc.linkQuotationRef"></span>
+            </div>
+          </template>
+          <template x-if="doc.saved_at">
+            <div class="doc__meta-row doc__meta-row--lifecycle">
+              <span class="doc__meta-label">Disimpan</span>
+              <span class="doc__meta-stamp" x-text="fmtStamp(doc.saved_at)"></span>
+            </div>
+          </template>
+          <template x-if="doc.last_revision_at">
+            <div class="doc__meta-row doc__meta-row--lifecycle">
+              <span class="doc__meta-label">Revisi ke-<span x-text="$store.doc.revisionCount"></span></span>
+              <span class="doc__meta-stamp" x-text="fmtStamp(doc.last_revision_at)"></span>
+            </div>
+          </template>
+        </section>
+      </div>
+
+      <!-- ── Pengiriman + Shipping Terms ── -->
+      <div class="so-form__row so-form__row--2col">
+        <template x-if="doc?.shipping_terms !== 'Locco'">
+          <section class="so-field region" data-map="documents.shipping_address">
+            <span class="db-tag">documents · shipping_address</span>
+            <label class="so-field__label">Alamat Pengiriman</label>
+            <div class="field-row">
+              <span class="field field--multiline" contenteditable="true"
+                    data-field="shipping-address"
+                    x-effect="editing['shipping-address'] ? null : ($el.innerText = doc?.shipping_address || '')"
+                    @focus="startEdit('shipping-address')"
+                    @input="doc.shipping_address = $event.target.innerText"
+                    @blur="cancelEdit('shipping-address')"></span>
+            </div>
+          </section>
+        </template>
+        <template x-if="doc?.shipping_terms === 'Locco'">
+          <section class="so-field region" data-map="documents.pickup_address">
+            <span class="db-tag">documents · pickup_address</span>
+            <label class="so-field__label">Alamat Penjemputan</label>
+            <div class="field-row">
+              <span class="field field--multiline" contenteditable="true"
+                    data-field="pickup-addr"
+                    x-effect="editing['pickup-addr'] ? null : ($el.innerText = doc?.pickup_address || '')"
+                    @focus="startEdit('pickup-addr')"
+                    @input="doc.pickup_address = $event.target.innerText"
+                    @blur="cancelEdit('pickup-addr')"></span>
+            </div>
+          </section>
+        </template>
+
+        <section class="so-field region" data-map="documents.shipping_terms">
+          <span class="db-tag">documents · shipping_terms</span>
+          <label class="so-field__label">Shipping Terms</label>
+          <div class="so-terms-row">
+            <template x-for="opt in ['Franco','Locco','FOB','CIF']" :key="opt">
+              <label class="so-term-radio">
+                <input type="radio" name="shippingTerms" :value="opt"
+                       :checked="doc?.shipping_terms === opt"
+                       @change="doc.shipping_terms = $event.target.value; if ($event.target.value === 'Locco') doc.shipping_address = ''" />
+                <span x-text="opt"></span>
+              </label>
+            </template>
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </template>
+
+  <!-- ════════════════ LINE ITEMS ════════════════ -->
+  <section class="region" data-map="document_lines">
+    <span class="db-tag">document_lines</span>
+    <table class="doc__lines">
+      <thead>
+        <tr>
+          <th class="col-no">No</th>
+          <th>Nama Barang</th>
+          <th class="col-qty">Qty</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-price">Harga Satuan</th>
+          <th class="col-total">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(line, idx) in pageLines" :key="'l'+line.id">
+          <tr class="doc__line">
+            <td class="col-no">
+              <span class="line-add" @click="addLine((pageIdx * LINES_PER_PAGE) + idx + 1)" title="Tambah baris">+</span>
+              <span class="line-no" x-text="(pageIdx * LINES_PER_PAGE) + idx + 1"></span>
+              <span class="line-del" @click="removeLine((pageIdx * LINES_PER_PAGE) + idx)" title="Hapus baris">×</span>
+            </td>
+            <td>
+              <span class="field" contenteditable="true"
+                    x-init="$el.innerText = line.item_name || ''"
+                    @input="line.item_name = $event.target.innerText"
+                    @focus="$el.select?.()"></span>
+            </td>
+            <td class="col-qty">
+              <input class="field num-field" type="text" inputmode="numeric" placeholder="0"
+                     :value="$intFmt(line.qty)"
+                     @input="line.qty = $intParse($event.target.value); $store.doc.touch()"
+                     @focus="$el.value = $intParse($el.value) || ''; $el.select()" />
+            </td>
+            <td class="col-unit">
+              <select class="field unit-select" x-model="line.unit">
+                <option value="Pcs">Pcs</option><option value="Kg">Kg</option>
+                <option value="Meter">Meter</option><option value="Roll">Roll</option>
+                <option value="Set">Set</option><option value="Lot">Lot</option>
+                <option value="Lembar">Lembar</option><option value="Batang">Batang</option>
+                <option value="Unit">Unit</option>
+              </select>
+            </td>
+            <td class="col-price">
+              <span class="field col-price__val"
+                    @click="openPricing(line)"
+                    :title="line.pricing ? 'Edit perhitungan harga' : 'Hitung harga satuan'"
+                    x-text="money(displayPrice(line))"></span>
+            </td>
+            <td class="col-total doc__line-total" x-text="money(displayTotal(line))"></td>
+          </tr>
+        </template>
+        <template x-if="pageLines.length === 0">
+          <tr class="doc__line-empty">
+            <td colspan="6">
+              <span class="line-empty-add" @click="addLine(0)">+ Tambah item pertama</span>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ════════════════ TOTALS — last page only ════════════════ -->
+  <template x-if="pageIdx === pageCount - 1">
+    <section class="doc__totals region" data-map="(derived via calc.ts)">
+      <span class="db-tag">derived · calc.ts</span>
+      <table class="doc__totals-table">
+        <tr>
+          <td class="label">Subtotal</td>
+          <td class="val" x-text="money(totals.subtotal)"></td>
+        </tr>
+        <tr>
+          <td class="label">Ongkos Kirim</td>
+          <td class="val">
+            <input class="field num-field" type="text" inputmode="numeric" placeholder="0"
+                   :disabled="$store.doc.shippingMode === 'free'"
+                   :class="$store.doc.shippingMode === 'free' ? 'is-disabled' : ''"
+                   x-init="$el.value = $moneyFmt($store.doc.shippingCost)"
+                   @input="$store.doc.shippingCost = $moneyParse($event.target.value)"
+                   @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                   @blur="$el.value = $moneyFmt($store.doc.shippingCost)" />
+          </td>
+        </tr>
+        <tr>
+          <td class="label">PPN 11%</td>
+          <td class="val" x-text="money(totals.ppnAmount)"></td>
+        </tr>
+        <tr class="grand">
+          <td class="label">Total</td>
+          <td class="val">Rp <span x-text="money(totals.grandTotal)"></span></td>
+        </tr>
+      </table>
+    </section>
+  </template>
+
+  <!-- ════════════════ SIGNATURES — last page only ════════════════ -->
+  <template x-if="pageIdx === pageCount - 1">
+    <div class="doc__signoff region" data-map="signatories">
+      <span class="db-tag">signatories</span>
+      <p>Demikian Sales Order ini dibuat sebagai acuan internal.</p>
+      <div class="doc__signatures">
+        <!-- Marketing — dari Penawaran yang di-link (marketing_staff_id) -->
+        <div class="doc__signature"
+             x-show="$store.doc.marketingStaffId" x-cloak>
+          <p>Dibuat oleh,</p>
+          <div class="sig-box"></div>
+          <div class="sig-name" x-text="$store.doc.marketingStaffName"></div>
+          <div class="sig-role">Marketing</div>
+        </div>
+        <!-- Direktur — dari master data signature -->
+        <div class="doc__signature" x-data="{ sig: $store.signatures.byRole('Direktur') }">
+          <p>Disetujui oleh,</p>
+          <div class="sig-box"></div>
+          <div class="sig-name" x-text="sig?.name"></div>
+          <div class="sig-role" x-text="sig?.role"></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+</article>
+</template>
+
+  <!-- ════════════════ PRICING CALCULATOR MODAL ════════════════ -->
+  <!-- SO: pricing can be edited even after loading from Penawaran.
+       Supplier may change last-minute — user can switch supplier
+       and recalculate prices. PO will load from this SO later. -->
+  <div x-data="pricingCalculator()" x-cloak class="region"
+       data-map="line_pricings">
+    <span class="db-tag">line_pricings</span>
+    <div class="modal-overlay" x-show="open" x-transition.opacity
+         @click.self="close()" style="display:none">
+      <div class="modal modal--pricing" @click.stop>
+        <div class="modal__head">
+          <h3>Hitung Harga Satuan</h3>
+          <button class="modal__close" @click="close()">✕</button>
+        </div>
+        <div class="modal__body">
+          <div class="pp-context">
+            <div><span>Item:</span> <b x-text="itemName"></b></div>
+            <div><span>Qty:</span> <b x-text="qty"></b></div>
+          </div>
+
+          <div class="pp-field pp-supplier">
+            <label>Supplier</label>
+            <input type="text" class="pp-input" x-model="supplierQuery"
+                   placeholder="Pilih supplier..."
+                   @focus="focusSupplier()" @input="filterSupplier()" @blur="closeSupplier()" />
+            <div class="pp" x-show="supplierOpen && !showQuickAdd" x-transition @mousedown.prevent="" x-cloak>
+              <template x-for="s in supplierResults" :key="s.id">
+                <button class="pp__item" @mousedown.prevent="pickSupplier(s.id)">
+                  <span class="pp__name" x-text="s.name"></span>
+                  <span class="pp__sub" x-text="s.contact_person || ''"></span>
+                </button>
+              </template>
+              <template x-if="supplierResults.length === 0">
+                <div class="pp__empty">Tidak ada hasil untuk "<span x-text="supplierQuery"></span>"</div>
+              </template>
+              <button class="pp__quickadd" @mousedown.prevent="openQuickAdd()">+ Quick Add</button>
+            </div>
+            <div class="pp qa" x-show="showQuickAdd" x-transition x-cloak>
+              <div class="qa__title">Tambah Supplier Baru</div>
+              <label class="qa__field"><span>Nama Perusahaan</span>
+                <input type="text" x-model="qaName" @keydown.enter="saveQuickAdd()" /></label>
+              <label class="qa__field"><span>Alamat Kantor</span>
+                <input type="text" x-model="qaAddress" /></label>
+              <label class="qa__field"><span>Nama PIC</span>
+                <input type="text" x-model="qaContact" /></label>
+              <label class="qa__field"><span>No. Kontak PIC</span>
+                <input type="text" x-model="qaPhone" /></label>
+              <div class="qa__actions">
+                <button class="qa__btn qa__btn--ghost" @mousedown.prevent="showQuickAdd = false">Batal</button>
+                <button class="qa__btn qa__btn--primary" @mousedown.prevent="saveQuickAdd()">Simpan</button>
+              </div>
+            </div>
+          </div>
+
+          <hr class="pp-divider" />
+
+          <div class="pp-mode">
+            <label class="pp-mode__opt" :class="{ 'pp-mode__opt--active': kgActive }">
+              <input type="radio" name="priceMode" value="kg" x-model="priceMode" />
+              Input per Kg <small>(derive per Unit)</small>
+            </label>
+            <label class="pp-mode__opt" :class="{ 'pp-mode__opt--active': unitActive }">
+              <input type="radio" name="priceMode" value="unit" x-model="priceMode" />
+              Input per Unit <small>(derive per Kg)</small>
+            </label>
+          </div>
+
+          <table class="pp-table">
+            <thead>
+              <tr><th></th><th>Harga Beli</th><th>Harga Jual</th></tr>
+            </thead>
+            <tbody>
+              <tr :class="{ 'pp-row--readonly': !kgActive }">
+                <td class="pp-label">Harga per Kg <small x-show="!kgActive">(derived)</small></td>
+                <td>
+                  <template x-if="kgActive">
+                    <input type="text" inputmode="numeric" class="pp-input num-field" placeholder="0"
+                           x-model.number="buy_per_kg"
+                           @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                           @blur="$el.value = $moneyFmt(buy_per_kg); onPriceInput('buy_per_kg')" />
+                  </template>
+                  <template x-if="!kgActive">
+                    <span class="pp-readonly" x-text="$moneyFmt(buy_per_kg)"></span>
+                  </template>
+                </td>
+                <td>
+                  <template x-if="kgActive">
+                    <input type="text" inputmode="numeric" class="pp-input num-field" placeholder="0"
+                           x-model.number="sell_per_kg"
+                           @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                           @blur="$el.value = $moneyFmt(sell_per_kg); onPriceInput('sell_per_kg')" />
+                  </template>
+                  <template x-if="!kgActive">
+                    <span class="pp-readonly" x-text="$moneyFmt(sell_per_kg)"></span>
+                  </template>
+                </td>
+              </tr>
+              <tr>
+                <td class="pp-label">Berat per Unit (kg)</td>
+                <td><input type="text" inputmode="numeric" class="pp-input num-field" placeholder="0"
+                           x-model.number="buy_weight_per_unit"
+                           @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                           @blur="$el.value = $moneyFmt(buy_weight_per_unit); onWeightInput('buy')" /></td>
+                <td><input type="text" inputmode="numeric" class="pp-input num-field" placeholder="0"
+                           x-model.number="sell_weight_per_unit"
+                           @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                           @blur="$el.value = $moneyFmt(sell_weight_per_unit); onWeightInput('sell')" /></td>
+              </tr>
+              <tr :class="{ 'pp-row--readonly': !unitActive }">
+                <td class="pp-label">Harga per Unit <small x-show="!unitActive">(derived)</small></td>
+                <td>
+                  <template x-if="unitActive">
+                    <input type="text" inputmode="numeric" class="pp-input num-field" placeholder="0"
+                           x-model.number="buy_per_unit"
+                           @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                           @blur="$el.value = $moneyFmt(buy_per_unit); onPriceInput('buy_per_unit')" />
+                  </template>
+                  <template x-if="!unitActive">
+                    <span class="pp-readonly" x-text="$moneyFmt(buy_per_unit)"></span>
+                  </template>
+                </td>
+                <td>
+                  <template x-if="unitActive">
+                    <input type="text" inputmode="numeric" class="pp-input num-field" placeholder="0"
+                           x-model.number="sell_per_unit"
+                           @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                           @blur="$el.value = $moneyFmt(sell_per_unit); onPriceInput('sell_per_unit')" />
+                  </template>
+                  <template x-if="!unitActive">
+                    <span class="pp-readonly" x-text="$moneyFmt(sell_per_unit)"></span>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="pp-margin">
+            <span>Margin per Unit:</span>
+            <b x-text="(marginUnit >= 0 ? '+' : '') + marginUnit.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2})"></b>
+            <span>(<span x-text="marginPctVal.toFixed(2)"></span>%)</span>
+          </div>
+        </div>
+
+        <div class="modal__foot">
+          <button class="qa__btn qa__btn--ghost" @click="close()">Batal</button>
+          <button class="qa__btn qa__btn--primary" @click="apply()">Terapkan ke Baris</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

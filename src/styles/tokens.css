@@ -1,0 +1,101 @@
+/* ============================================================================
+   DESIGN TOKENS
+   Industrial slate — a quiet instrument for steel-trading operations.
+   The shell recedes; the document is the artifact.
+   ============================================================================ */
+
+:root {
+  /* ── Surface & ink ────────────────────────────────────────────
+     Cool neutrals (not pure gray, not warm cream). Workshop light. */
+  --c-bg: #eef0f3;          /* workspace behind the document */
+  --c-surface: #ffffff;     /* sidebar / cards / document paper */
+  --c-surface-2: #f7f8fa;   /* table zebra, inputs */
+  --c-surface-3: #eceef1;   /* hover, dividers base */
+
+  --c-ink: #1a1d23;         /* primary text — near-black, faintly warm */
+  --c-ink-2: #4a5160;       /* secondary text */
+  --c-ink-3: #8b94a3;       /* muted / labels / placeholder */
+
+  --c-line: #d8dce2;        /* hairlines, borders */
+  --c-line-2: #e6e9ed;      /* lighter divider */
+
+  /* ── Accent: deep steel blue ──────────────────────────────────
+     Maritime/industrial, deliberately NOT the generic indigo/violet. */
+  --c-accent: #2c4a6b;
+  --c-accent-2: #3d6288;    /* hover */
+  --c-accent-soft: #e8eef4; /* tint background */
+
+  /* ── Status tones (muted, for badges) ───────────────────────── */
+  --tone-neutral-bg: #eceef1;  --tone-neutral-fg: #4a5160;
+  --tone-info-bg: #e1ecf5;     --tone-info-fg: #2a5277;
+  --tone-success-bg: #e2efe6;  --tone-success-fg: #3a6b46;
+  --tone-danger-bg: #f4e3e1;   --tone-danger-fg: #8a4039;
+
+  /* ── DB-map overlay (the signature interaction) ───────────────
+     Amber brackets — reads as "annotation / X-ray", distinct from accent. */
+  --c-map: #b8762a;
+  --c-map-soft: #fbf0e0;
+
+  /* ── Type ─────────────────────────────────────────────────────
+     Shell = system sans (tool). Document = Georgia serif (official letter).
+     Numbers = tabular so columns align. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;   /* the document artifact */
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", monospace;
+
+  /* scale (shell — dense ERP tool) */
+  --t-xs: 11px;
+  --t-sm: 12px;
+  --t-base: 13px;   /* dense ERP tool, not a marketing site */
+  --t-md: 15px;
+  --t-lg: 18px;
+  --t-xl: 22px;
+
+  /* ── Document typographic roles (master theme, all modules) ────
+     Semantic by role so every module (quotation/invoice/PO/payment)
+     shares one scale. Base unit 13.5px, ~1.2× ratio (modular scale).
+     Use the ROLE tokens, never raw px, in document.css. */
+  --td-display: 22px;   /* hero numbers, big totals */
+  --td-title:    18px;   /* document title / issuer name */
+  --td-h2:       15px;   /* section headings */
+  --td-body:    13.5px;  /* default body text, table cells */
+  --td-small:   11.5px;  /* secondary text, addresses, captions */
+  --td-caption: 10.5px;  /* labels, meta, footer-level text */
+  --td-micro:     9.5px; /* badges, tiny tags */
+
+  /* Font weights (named, not raw numbers) */
+  --tw-regular:  400;
+  --tw-medium:   500;
+  --tw-semibold: 600;
+  --tw-bold:     700;
+  --tw-heavy:    800;
+
+  /* Type families by role (serif = document, sans = chrome/labels, mono = data) */
+  --tf-doc:    var(--font-serif);   /* body of the document */
+  --tf-label:  var(--font-sans);    /* labels, meta, badges, chrome */
+  --tf-data:   var(--font-mono);    /* doc numbers, money, quantities */
+
+  /* ── Spacing scale ──────────────────────────────────────────── */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* ── Radii — small & mechanical, not soft/bouncy ────────────── */
+  --r-1: 3px;
+  --r-2: 6px;
+  --r-3: 10px;
+
+  /* ── Shadow — paper on desk ─────────────────────────────────── */
+  --shadow-paper: 0 1px 2px rgba(20, 30, 50, 0.06), 0 8px 24px rgba(20, 30, 50, 0.08);
+  --shadow-card: 0 1px 2px rgba(20, 30, 50, 0.05);
+
+  /* ── Layout ─────────────────────────────────────────────────── */
+  --sidebar-w: 232px;
+  --handle-w: 22px;
+  --topbar-h: 52px;
+  --doc-w: 794px;   /* A4 @ 96dpi */
+}

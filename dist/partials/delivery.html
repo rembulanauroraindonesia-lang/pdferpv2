@@ -1,0 +1,172 @@
+<!--
+  PARTIAL BODY: delivery.html
+  ----------------------------------------------------------------------------
+  Surat Jalan — A5 format. Compact header, pengiriman detail, item list,
+  3 signatures: Penerima Barang, Supir, Mengetahui PT. REMBULAN AURORA INDONESIA.
+-->
+<div class="sj-page" x-data="docBody($store.doc.currentId)">
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="sj-head">
+    <img class="sj-logo" src="/logo.jpg" alt="Logo" />
+    <div class="sj-company">PT REMBULAN AURORA INDONESIA</div>
+  </header>
+
+  <!-- ═══════════ TITLE + NO ═══════════ -->
+  <div class="sj-title-row">
+    <div class="sj-title">SURAT JALAN</div>
+    <div class="sj-docno">
+      <span class="sj-docno-label">No.</span>
+      <span x-text="doc.doc_no"></span>
+      <template x-if="$store.doc.revisionCount > 0">
+        <span x-text="' r' + $store.doc.revisionCount"></span>
+      </template>
+    </div>
+  </div>
+
+  <!-- ═══════════ CUSTOMER + DATE ═══════════ -->
+  <div class="sj-meta">
+    <div class="sj-meta__row">
+      <span class="sj-meta__label">Kepada Yth,</span>
+    </div>
+    <div class="sj-meta__row sj-meta__row--party" x-data="partyPicker(party)">
+      <input class="field party-search" type="text" x-model="query"
+             placeholder="Pilih customer..."
+             @focus="focusField()" @input="buildResults()" @blur="close()" />
+      <div class="pp" x-show="open && !showQuickAdd" x-transition @mousedown.prevent="" x-cloak>
+        <template x-for="r in results" :key="r.id">
+          <button class="pp__item" @mousedown.prevent="pick(r.id)">
+            <span class="pp__name" x-text="r.name"></span>
+          </button>
+        </template>
+        <button class="pp__quickadd" @mousedown.prevent="openQuickAdd()">+ Quick Add</button>
+      </div>
+      <div class="sj-party-name" x-text="party?.name || ''"></div>
+      <div class="sj-party-addr" x-text="party?.address || ''"></div>
+      <div class="sj-party-pic" x-show="party?.contact_person">
+        Up: <span x-text="party?.contact_person"></span>
+        <template x-if="party?.contact_phone">
+          — <span x-text="party?.contact_phone"></span>
+        </template>
+      </div>
+    </div>
+    <div class="sj-meta__row" x-data="datePicker(doc.date)" @set-date="setDate($event.detail)">
+      <span class="sj-meta__label">Tanggal</span>
+      <span class="field date-field sj-meta__value" @click="toggle()" x-text="fmtDate(selected)"></span>
+    </div>
+  </div>
+
+  <!-- ═══════════ PENGIRIMAN DETAIL ═══════════ -->
+  <div class="sj-ship">
+    <div class="sj-ship__title">Detail Pengiriman</div>
+    <div class="sj-ship__grid">
+      <div class="sj-ship__field">
+        <label class="sj-ship__label">Plat Mobil</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="delivery-plat"
+              x-effect="editing['delivery-plat'] ? null : ($el.innerText = doc?.delivery_plat_no || '')"
+              @focus="startEdit('delivery-plat')"
+              @input="doc.delivery_plat_no = $event.target.innerText"
+              @blur="cancelEdit('delivery-plat')"></span>
+      </div>
+      <div class="sj-ship__field">
+        <label class="sj-ship__label">Tipe Mobil</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="delivery-vehicle"
+              x-effect="editing['delivery-vehicle'] ? null : ($el.innerText = doc?.delivery_vehicle_type || '')"
+              @focus="startEdit('delivery-vehicle')"
+              @input="doc.delivery_vehicle_type = $event.target.innerText"
+              @blur="cancelEdit('delivery-vehicle')"></span>
+      </div>
+      <div class="sj-ship__field">
+        <label class="sj-ship__label">Kapasitas Muatan</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="delivery-capacity"
+              x-effect="editing['delivery-capacity'] ? null : ($el.innerText = doc?.delivery_capacity_kg ? doc.delivery_capacity_kg + ' kg' : '')"
+              @focus="startEdit('delivery-capacity')"
+              @input="doc.delivery_capacity_kg = parseFloat($event.target.innerText) || 0"
+              @blur="cancelEdit('delivery-capacity')"></span>
+      </div>
+      <div class="sj-ship__field">
+        <label class="sj-ship__label">Nama Supir</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="delivery-driver"
+              x-effect="editing['delivery-driver'] ? null : ($el.innerText = doc?.delivery_driver_name || '')"
+              @focus="startEdit('delivery-driver')"
+              @input="doc.delivery_driver_name = $event.target.innerText"
+              @blur="cancelEdit('delivery-driver')"></span>
+      </div>
+      <div class="sj-ship__field sj-ship__field--full">
+        <label class="sj-ship__label">No. Kontak Supir</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="delivery-driver-phone"
+              x-effect="editing['delivery-driver-phone'] ? null : ($el.innerText = doc?.delivery_driver_phone || '')"
+              @focus="startEdit('delivery-driver-phone')"
+              @input="doc.delivery_driver_phone = $event.target.innerText"
+              @blur="cancelEdit('delivery-driver-phone')"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ LINE ITEMS ═══════════ -->
+  <template x-if="lines.length > 0">
+    <table class="sj-lines">
+      <thead>
+        <tr>
+          <th class="sj-lines__no">No</th>
+          <th class="sj-lines__desc">Nama Barang</th>
+          <th class="sj-lines__qty">Qty</th>
+          <th class="sj-lines__unit">Satuan</th>
+          <th class="sj-lines__note">Ket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(l, i) in lines" :key="l.id">
+          <tr>
+            <td class="sj-lines__no" x-text="i + 1"></td>
+            <td class="sj-lines__desc" x-text="l.item_name"></td>
+            <td class="sj-lines__qty"
+                contenteditable="true"
+                @input="l.qty = parseFloat($event.target.innerText) || 0; $store.doc.touch()"
+                @blur="l.qty = parseFloat($event.target.innerText) || 0"
+                x-text="l.qty"></td>
+            <td class="sj-lines__unit" x-text="l.unit"></td>
+            <td class="sj-lines__note" contenteditable="true"></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </template>
+  <template x-if="lines.length === 0">
+    <div class="sj-empty">
+      <div class="sj-empty__icon">▦</div>
+      <div>Belum ada item. Klik <b>Hubungkan Dokumen</b> di panel Opsi untuk memuat dari Sales Order.</div>
+    </div>
+  </template>
+
+  <!-- ═══════════ SIGNATURES ═══════════ -->
+  <div class="sj-signatures">
+    <div class="sj-sig">
+      <p class="sj-sig__label">Penerima Barang,</p>
+      <div class="sig-box sj-sig__box"></div>
+      <div class="sig-name sj-sig__name">(Nama & Tanda Tangan)</div>
+    </div>
+    <div class="sj-sig">
+      <p class="sj-sig__label">Supir,</p>
+      <div class="sig-box sj-sig__box"></div>
+      <div class="sig-name sj-sig__name">(Nama & Tanda Tangan)</div>
+    </div>
+    <div class="sj-sig" x-data="{ sig: $store.signatures.byRole('Logistik') }">
+      <p class="sj-sig__label">Mengetahui,</p>
+      <div class="sig-box sj-sig__box"></div>
+      <div class="sig-name sj-sig__name" x-text="sig?.name"></div>
+      <div class="sig-role sj-sig__name" x-text="sig?.role" style="font-size:var(--td-small);color:var(--c-ink-2);"></div>
+    </div>
+  </div>
+
+</div>

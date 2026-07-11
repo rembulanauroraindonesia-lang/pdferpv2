@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERP · Rembulan Aurora</title>
+  <meta name="description" content="Document-centric ERP — living documents backed by structured data" />
+  <script type="module" crossorigin src="/assets/index-B0TH6Ikb.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-n7XXw34d.css">
+</head>
+<body>
+  <div class="app" x-data>
+    <!-- ─────────────────────────── SIDEBAR ─────────────────────────── -->
+    <aside class="sidebar" :class="{ 'sidebar--closed': !$store.shell.sidebarVisible }">
+      <div class="sidebar__body">
+        <div class="brand">
+          <div class="brand__mark">R</div>
+          <div class="brand__name">
+            Rembulan Aurora
+            <span>ERP · v0.3 mockup</span>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Utama">
+          <!-- ════ DASHBOARD ═════════════════════════════════════════ -->
+          <div class="nav__group">
+            <div class="nav__label">Dashboard</div>
+            <a class="nav__link" data-view="deal-tracker" data-direction="jual"
+               href="#"
+               @click.prevent="$store.shell.setActive('deal-tracker', 'jual'); $store.doc.optionsVisible = false; documentView().loadBody()">
+              <span class="nav__icon">◆</span> Deal Tracker
+            </a>
+          </div>
+
+          <!-- ════ PENJUALAN ════════════════════════════════════════════ -->
+          <div class="nav__group">
+            <div class="nav__label">Penjualan</div>
+            <a class="nav__link" data-view="quotation" data-direction="jual"
+               href="#"
+               @click.prevent="$store.doc.setType('quotation', 'jual'); $store.shell.setActive('quotation', 'jual')">
+              <span class="nav__icon">Q</span> Penawaran
+            </a>
+            <a class="nav__link" data-view="sales_order" data-direction="jual" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('sales_order', 'jual'); $store.shell.setActive('sales_order', 'jual')">
+              <span class="nav__icon">S</span> Sales Order
+            </a>
+            <a class="nav__link" data-view="proforma_invoice" data-direction="jual" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('proforma_invoice', 'jual'); $store.shell.setActive('proforma_invoice', 'jual')">
+              <span class="nav__icon">F</span> Proforma Invoice
+            </a>
+            <a class="nav__link" data-view="delivery" data-direction="jual" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('delivery', 'jual'); $store.shell.setActive('delivery', 'jual')">
+              <span class="nav__icon">D</span> Surat Jalan
+            </a>
+            <a class="nav__link" data-view="invoice" data-direction="jual" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('invoice', 'jual'); $store.shell.setActive('invoice', 'jual')">
+              <span class="nav__icon">I</span> Invoice
+            </a>
+          </div>
+
+          <!-- ════ PEMBELIAN ════════════════════════════════════════════ -->
+          <div class="nav__group">
+            <div class="nav__label">Pembelian</div>
+            <a class="nav__link" data-view="po" data-direction="beli" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('po', 'beli'); $store.shell.setActive('po', 'beli')">
+              <span class="nav__icon">P</span> Purchase Order
+            </a>
+            <a class="nav__link" data-view="proforma_invoice" data-direction="beli" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('proforma_invoice', 'beli'); $store.shell.setActive('proforma_invoice', 'beli')">
+              <span class="nav__icon">F</span> Proforma Invoice
+            </a>
+            <a class="nav__link" data-view="pickup" data-direction="beli" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('pickup', 'beli'); $store.shell.setActive('pickup', 'beli')">
+              <span class="nav__icon">P</span> Pick Up
+            </a>
+            <a class="nav__link" data-view="invoice" data-direction="beli" data-stub
+               href="#"
+               @click.prevent="$store.doc.setType('invoice', 'beli'); $store.shell.setActive('invoice', 'beli')">
+              <span class="nav__icon">I</span> Invoice
+            </a>
+          </div>
+
+          <!-- ════ MASTER DATA ════════════════════════════════════════ -->
+          <div class="nav__group">
+            <div class="nav__label">Master Data</div>
+            <a class="nav__link" data-view="parties" data-direction="jual" href="#"
+               @click.prevent="$store.shell.setActive('parties','jual'); $store.doc.optionsVisible = false; documentView().loadBody()">
+              <span class="nav__icon">A</span> PARTIES</a>
+            <a class="nav__link" data-view="upload" data-direction="jual" href="#"
+               @click.prevent="$store.shell.setActive('upload','jual'); $store.doc.optionsVisible = false; documentView().loadBody()">
+              <span class="nav__icon">⬆</span> UPLOAD</a>
+            <a class="nav__link" data-view="signature" data-direction="jual" href="#"
+               @click.prevent="$store.shell.setActive('signature','jual'); $store.doc.optionsVisible = false; documentView().loadBody()">
+              <span class="nav__icon">✍</span> SIGNATURE</a>
+            <a class="nav__link" data-stub href="#"><span class="nav__icon">▤</span> Item / Katalog</a>
+          </div>
+        </nav>
+
+        <div class="sidebar__footer">
+          PocketBase · belum terhubung<br />
+          Data: placeholder (seed)
+        </div>
+      </div>
+      <!-- Sidebar handle: always visible. Stays at the right edge of the
+           sidebar when open, then at the leftmost edge when collapsed —
+           so the user can always click to expand again. -->
+      <button class="sidebar__handle"
+              @click="$store.shell.toggleSidebar()"
+              :aria-label="$store.shell.sidebarVisible ? 'Sembunyikan navigasi' : 'Tampilkan navigasi'"
+              :aria-expanded="$store.shell.sidebarVisible">
+        <span class="sidebar__handle-icon" x-text="$store.shell.sidebarVisible ? '‹' : '›'"></span>
+      </button>
+    </aside>
+
+    <div class="app__main">
+    <!-- ─────────────────────────── TOPBAR ──────────────────────────── -->
+    <header class="topbar">
+      <div class="topbar__crumbs">
+        <span>Dokumen</span>
+        <span class="sep">/</span>
+        <b x-text="$store.shell.label"></b>
+        <span class="sep">·</span>
+        <span class="badge" data-tone="neutral">Mockup</span>
+      </div>
+
+      <div class="topbar__spacer"></div>
+
+      <!-- Document status actions (right justified, beside DB Map) -->
+      <div class="doc-actions" x-data>
+        <!-- Draft indicator (always visible, shows current state). The dot
+             blinks bright green while in an editable state (draft/revising).
+             Reads from current document's status + revision_count. -->
+        <span class="doc-state region" data-map="documents.status"
+              :class="$store.doc.isEditable ? 'doc-state--live' : 'doc-state--locked'">
+          <span class="db-tag">documents · status</span>
+          <span class="doc-state__dot"></span>
+          <span x-text="$store.doc.isLocked
+                        ? 'Tersimpan'
+                        : ($store.doc.revisionCount > 0
+                            ? 'Revisi ke-' + $store.doc.revisionCount
+                            : 'Draft')"></span>
+        </span>
+
+        <button class="doc-action doc-action--primary"
+                @click="$store.doc.save()"
+                :disabled="$store.doc.isLocked"
+                :title="$store.doc.isLocked ? 'Dokumen sudah disimpan — klik Revisi untuk edit' : 'Simpan & kunci dokumen'"
+                x-text="$store.doc.isLocked ? 'Terkunci' : 'Simpan'"></button>
+        <button class="doc-action doc-action--ghost"
+                @click="$store.doc.revise()"
+                :disabled="!$store.doc.canRevise"
+                :title="$store.doc.canRevise ? 'Buka kunci untuk revisi' : 'Batas revisi (3×) tercapai'"
+                x-text="'Revisi ' + $store.doc.revisionCount + '/3'"></button>
+        <!-- Batal: visible only during an active revision. Rolls back the
+             revision (status → sent, revision_count--). -->
+        <button class="doc-action doc-action--danger"
+                x-show="$store.doc.canCancel" x-cloak
+                @click="$store.doc.cancelRevise()"
+                title="Batalkan revisi, kembali ke dokumen tersimpan">Batal</button>
+        <button class="doc-action doc-action--ghost"
+                @click="$store.doc.print()"
+                title="Cetak dokumen">Print</button>
+        <button class="doc-action doc-action--ghost"
+                @click="$store.doc.download()"
+                title="Unduh dokumen">Download</button>
+      </div>
+
+      <!-- The signature control: toggle the data-layer X-ray -->
+      <button class="toggle-map"
+              :aria-pressed="$store.shell.mapOn"
+              @click="$store.shell.toggleMap()">
+        <span class="toggle-map__dot"></span>
+        DB Map
+      </button>
+    </header>
+
+    <!-- ─────────────────────── WORKSPACE (MASTER TEMPLATE) ──────────────────────── -->
+    <!--
+      Master chrome — shared across ALL document types (quotation, invoice,
+      PO, payment). Only #doc-body is swapped per type. This is the contract:
+        .document-view  → orchestrator (Alpine documentView())
+        .doc-scroller   → nav antar INSTANCE (044/045/...) — Alpine reactive
+        .options-panel  → "Opsi Tampilan" (stack/side) — Alpine + CSS
+        .pages #doc-body → BODY per-tipe, loaded by htmx
+    -->
+    <main class="workspace">
+      <div class="document-view" x-data="documentView()" x-effect="loadBody()">
+
+        <!-- Doc scroller: dial-style chip carousel (blur at edges).
+             Each chip is a Document from the `documents` collection
+             (filtered by current type). -->
+        <div class="doc-scroller region" data-map="documents (list)">
+          <span class="db-tag">documents · list</span>
+          <!-- +Baru: leading, always visible, sized like a chip -->
+          <button class="doc-chip doc-chip--new"
+                  @click="$store.doc.addNew()"
+                  :disabled="$store.doc.lastNewId !== '' && $store.doc.isNewEmpty($store.doc.lastNewId)"
+                  :title="($store.doc.lastNewId && $store.doc.isNewEmpty($store.doc.lastNewId)) ? 'Selesaikan dokumen baru sebelumnya dulu' : 'Tambah dokumen baru'">
+            <span class="doc-chip__no">+ Baru</span>
+          </button>
+          <button class="doc-scroller__arrow"
+                  @click="$refs.track.scrollBy({left: -160, behavior:'smooth'})"
+                  aria-label="Dokumen sebelumnya">‹</button>
+          <div class="doc-scroller__track" x-ref="track">
+            <template x-for="d in docs" :key="d.id">
+              <button class="doc-chip"
+                      :aria-current="isCurrent(d.id) ? 'true' : 'false'"
+                      @click="selectDoc(d.id)">
+                <span class="doc-chip__no">
+                  <span x-text="shortNo(d.doc_no)"></span><template x-if="isCurrent(d.id) && $store.doc.revisionCount > 0"><span class="rev-inline" x-text="'r' + $store.doc.revisionCount"></span></template><template x-if="!isCurrent(d.id) && d.revision_count > 0"><span class="rev-inline" x-text="'r' + d.revision_count"></span></template>
+                </span>
+                <span class="doc-chip__date" x-text="fmtDate(d.date)"></span>
+                <span class="badge doc-chip__status"
+                      :data-tone="statusMeta(d.status).tone"
+                      x-text="statusMeta(d.status).label"></span>
+              </button>
+            </template>
+          </div>
+          <button class="doc-scroller__arrow"
+                  @click="$refs.track.scrollBy({left: 160, behavior:'smooth'})"
+                  aria-label="Dokumen berikutnya">›</button>
+        </div>
+
+        <!-- Doc layout: options drawer (left, collapsible) + pages (right)
+             ONE combined panel with three sections: Tampilan, Margin
+             Preview, Konfigurasi. When hidden, the panel collapses to
+             just the handle (22px) so the document gets the full width
+             and centers. -->
+        <div class="doc-layout">
+          <div class="options-drawer"
+               :class="{ 'options-drawer--closed': !$store.doc.optionsVisible }">
+            <button class="options-drawer__handle"
+                    @click="$store.doc.optionsVisible = !$store.doc.optionsVisible"
+                    :aria-label="$store.doc.optionsVisible ? 'Sembunyikan opsi' : 'Tampilkan opsi'"
+                    :aria-expanded="$store.doc.optionsVisible">
+              <span class="options-drawer__label">O</span>
+            </button>
+            <div class="options-panel">
+              <div class="options-section__title options-section__title--root">Opsi</div>
+
+              <!-- ── Tampilan ──────────────────────────────────── -->
+              <div class="options-subsection region" data-map="documents.page_layout">
+                <span class="db-tag">documents · page_layout</span>
+                <div class="options-section__title">Tampilan</div>
+                <div class="opt-toggle">
+                  <button class="opt-toggle__btn"
+                          :aria-pressed="$store.doc.pageLayout === 'stack' ? 'true' : 'false'"
+                          @click="$store.doc.setLayout('stack')">
+                    <span class="opt-toggle__icon">⥁</span> Ke Bawah
+                  </button>
+                  <button class="opt-toggle__btn"
+                          :aria-pressed="$store.doc.pageLayout === 'side' ? 'true' : 'false'"
+                          @click="$store.doc.setLayout('side')">
+                    <span class="opt-toggle__icon">⇄</span> Ke Samping
+                  </button>
+                </div>
+              </div>
+
+              <!-- ── Margin Preview ────────────────────────────── -->
+              <div class="options-subsection region" data-map="derived · docStore"
+                   x-show="$store.doc.showMarginPreview" x-cloak>
+                <span class="db-tag">derived · docStore</span>
+                <div class="options-section__title">Margin Preview</div>
+                <div class="margin-preview">
+                  <div class="margin-row">
+                    <span>Harga Jual</span>
+                    <b x-text="$numFmt($store.doc.totalSell)"></b>
+                  </div>
+                  <div class="margin-row">
+                    <span>HPP</span>
+                    <b x-text="$numFmt($store.doc.totalBuy)"></b>
+                  </div>
+                  <div class="margin-row">
+                    <span>Ongkos Kirim <small>(Customer)</small></span>
+                    <b x-text="$numFmt($store.doc.shippingCost)"></b>
+                  </div>
+                  <div class="margin-row">
+                    <span>Komisi</span>
+                    <b x-text="$numFmt($store.doc.komisi)"></b>
+                  </div>
+                  <div class="margin-row">
+                    <span>Komisi %</span>
+                    <b x-text="$store.doc.komisiPct.toFixed(2) + '%'"></b>
+                  </div>
+                  <div class="margin-row">
+                    <span>Ongkos Kirim <small>(Include)</small></span>
+                    <b x-text="$numFmt($store.doc.shippingCostInclude)"></b>
+                  </div>
+                  <div class="margin-row margin-row--divider">
+                    <span>Margin</span>
+                    <b x-text="$numFmt($store.doc.totalMargin)"></b>
+                  </div>
+                  <div class="margin-row">
+                    <span>Margin %</span>
+                    <b x-text="$store.doc.totalMarginPct.toFixed(1) + '%'"></b>
+                  </div>
+                  <div class="margin-row margin-row--tax">
+                    <span>Potensi Pajak</span>
+                    <b x-text="$numFmt($store.doc.potensiPajak)"></b>
+                  </div>
+                </div>
+                <div class="cfg-field">
+                  <label class="cfg-label" for="komisi-input">Komisi</label>
+                  <input id="komisi-input"
+                         class="cfg-input num-field"
+                         type="text" inputmode="numeric"
+                         placeholder="0"
+                         x-init="$el.value = $moneyFmt($store.doc.komisi)"
+                         @input="$store.doc.komisi = $moneyParse($event.target.value)"
+                         @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                         @blur="$el.value = $moneyFmt($store.doc.komisi)" />
+                </div>
+                <div class="cfg-field">
+                  <label class="cfg-label" for="ongkir-include-input">
+                    Ongkos Kirim <small>(Include)</small>
+                  </label>
+                  <input id="ongkir-include-input"
+                         class="cfg-input num-field"
+                         type="text" inputmode="numeric"
+                         placeholder="0"
+                         x-init="$el.value = $moneyFmt($store.doc.shippingCostInclude)"
+                         @input="$store.doc.shippingCostInclude = $moneyParse($event.target.value)"
+                         @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                         @blur="$el.value = $moneyFmt($store.doc.shippingCostInclude)" />
+                </div>
+              </div>
+
+              <!-- ── Konfigurasi ───────────────────────────────── -->
+              <div class="options-subsection region" data-map="documents (config)"
+                   x-show="$store.doc.showConfig" x-cloak>
+                <span class="db-tag">documents · config</span>
+                <div class="options-section__title">Konfigurasi</div>
+                <div class="cfg-field">
+                  <label class="cfg-label">Ongkos Kirim</label>
+                  <div class="cfg-radio-group">
+                    <label class="cfg-radio">
+                      <input type="radio" name="shippingMode" value="free"
+                             :checked="$store.doc.shippingMode === 'free'"
+                             @change="$store.doc.setShippingMode('free')" />
+                      <span>Free Ongkir</span>
+                    </label>
+                    <label class="cfg-radio">
+                      <input type="radio" name="shippingMode" value="bebankan"
+                             :checked="$store.doc.shippingMode === 'bebankan'"
+                             @change="$store.doc.setShippingMode('bebankan')" />
+                      <span>Bebankan Ongkir</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-field">
+                  <label class="cfg-label">PPN</label>
+                  <div class="cfg-radio-group">
+                    <label class="cfg-radio">
+                      <input type="radio" name="ppnMode" value="include"
+                             :checked="$store.doc.ppnIncluded"
+                             @change="$store.doc.setPpnIncluded(true)" />
+                      <span>include PPN 11%</span>
+                    </label>
+                    <label class="cfg-radio">
+                      <input type="radio" name="ppnMode" value="exclude"
+                             :checked="!$store.doc.ppnIncluded"
+                             @change="$store.doc.setPpnIncluded(false)" />
+                      <span>exclude PPN 11%</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="cfg-field">
+                  <label class="cfg-label">Marketing</label>
+                  <select class="cfg-select"
+                          :value="$store.doc.marketingStaffId"
+                          @change="$store.doc.setMarketingStaff($event.target.value)">
+                    <option value="">— Pilih staff —</option>
+                    <template x-for="s in $store.shell.staff" :key="s.id">
+                      <option :value="s.id" x-text="s.name"></option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+
+              <!-- ── Hubungkan Dokumen (SO only) ────────────────── -->
+              <div class="options-subsection region"
+                   data-map="documents.parent_doc_id"
+                   x-show="$store.doc.type === 'sales_order'" x-cloak>
+                <span class="db-tag">documents</span>
+                <div class="options-section__title">Hubungkan Dokumen</div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Dari Penawaran</label>
+                  <select class="cfg-select"
+                          x-model="$store.doc.linkQuotationId"
+                          @change="$store.doc.linkQuotation($event.target.value)">
+                    <option value="">— Pilih Penawaran —</option>
+                    <template x-for="q in $store.doc.linkQuotationOptions" :key="q.id">
+                      <option :value="q.id" x-text="q.doc_no + ' · ' + q.party_name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <div class="cfg-field" x-show="$store.doc.linkQuotationId" x-cloak>
+                  <label class="cfg-label">Jatuh Tempo</label>
+                  <div class="so-ops-info" x-text="$store.doc.linkJatuhTempo"></div>
+                </div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">No. PO Customer</label>
+                  <span class="field so-ops-link-input"
+                        contenteditable="true"
+                        data-field="customer-po"
+                        x-effect="$store.doc.editingLink['customer-po'] ? null : ($el.innerText = $store.doc.linkDoc()?.customer_po_no || '')"
+                        @focus="$store.doc.editingLink['customer-po'] = true"
+                        @input="$store.doc.updateLinkField('customer_po_no', $event.target.innerText)"
+                        @blur="$store.doc.editingLink['customer-po'] = false"></span>
+                </div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Upload PO Customer</label>
+                  <div x-data="fileUpload($store.doc.linkDoc()?.customer_po_file || '', (v) => $store.doc.updateLinkField('customer_po_file', v))" class="pfi-beli__file-pick">
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
+                           x-ref="up" @change="handlePick($event)" />
+                    <label x-show="!file">
+                      <span @click="$refs.up.click()" class="pfi-beli__file-btn">📎 Pilih file</span>
+                    </label>
+                    <div x-show="file" x-cloak class="pfi-beli__file-preview">
+                      <img x-show="previewUrl" :src="previewUrl" class="pfi-beli__file-thumb"
+                           @click="openViewer()" title="Klik untuk lihat penuh" />
+                      <span x-show="!previewUrl" class="pfi-beli__file-icon">📄</span>
+                      <b x-text="file" @click="openViewer()" style="cursor:pointer"></b>
+                      <button @click="replace()" class="pfi-beli__file-replace" title="Ganti file">[G]</button>
+                      <button @click="clearFile()" class="pfi-beli__file-clear" title="Hapus file">×</button>
+                    </div>
+                    <div x-show="log.length" x-cloak class="pfi-beli__file-log">
+                      <small>Riwayat:</small>
+                      <template x-for="(f,i) in log" :key="i">
+                        <span class="pfi-beli__file-log-item" x-text="f"></span>
+                      </template>
+                    </div>
+                    <div class="upload-viewer" x-show="viewerOpen" x-cloak @click.self="closeViewer()">
+                      <button class="upload-viewer__close" @click="closeViewer()">✕</button>
+                      <img x-show="isImage && previewUrl" :src="previewUrl" class="upload-viewer__img" />
+                      <div x-show="!isImage || !previewUrl" class="upload-viewer__placeholder">
+                        <span class="upload-viewer__file-icon" x-text="fileIcon"></span>
+                        <b x-text="file"></b>
+                        <p>Tidak ada pratinjau (mockup)</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Hubungkan Dokumen (PFI only) ───────────────── -->
+              <div class="options-subsection region"
+                   data-map="documents.parent_doc_id"
+                   x-show="$store.doc.type === 'proforma_invoice' && $store.doc.direction === 'jual'" x-cloak>
+                <span class="db-tag">documents</span>
+                <div class="options-section__title">Hubungkan Dokumen</div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Dari Sales Order</label>
+                  <select class="cfg-select"
+                          x-model="$store.doc.linkSalesOrderId"
+                          @change="$store.doc.linkSalesOrder($event.target.value)">
+                    <option value="">— Pilih Sales Order —</option>
+                    <template x-for="so in $store.doc.linkSalesOrderOptions" :key="so.id">
+                      <option :value="so.id" x-text="so.doc_no + ' · ' + so.party_name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <div class="cfg-field" x-show="$store.doc.linkSalesOrderId" x-cloak>
+                  <label class="cfg-label">Jatuh Tempo</label>
+                  <div class="so-ops-info" x-text="$store.doc.linkJatuhTempo"></div>
+                </div>
+              </div>
+
+              <!-- ── Hubungkan Dokumen (PFI BELI only) ─────────────── -->
+              <div class="options-subsection region"
+                   data-map="documents.parent_doc_id"
+                   x-show="$store.doc.type === 'proforma_invoice' && $store.doc.direction === 'beli'" x-cloak>
+                <span class="db-tag">documents</span>
+                <div class="options-section__title">Hubungkan Dokumen</div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Dari Purchase Order</label>
+                  <select class="cfg-select"
+                          x-model="$store.doc.linkPFIBeliPOId"
+                          @change="$store.doc.linkPFIBeliPO($event.target.value)">
+                    <option value="">— Pilih Purchase Order —</option>
+                    <template x-for="po in $store.doc.linkPFIBeliPOOptions" :key="po.id">
+                      <option :value="po.id" x-text="po.doc_no + ' · ' + po.party_name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <div class="cfg-field" x-show="$store.doc.linkPFIBeliPOId" x-cloak>
+                  <label class="cfg-label">Referensi</label>
+                  <div class="so-ops-info" x-text="$store.doc.linkPFIBeliFrom"></div>
+                </div>
+              </div>
+
+              <!-- ── Hubungkan Dokumen (Invoice only) ──────────────── -->
+              <div class="options-subsection region"
+                   data-map="documents.parent_doc_id"
+                   x-show="$store.doc.type === 'invoice'" x-cloak>
+                <span class="db-tag">documents</span>
+                <div class="options-section__title">Hubungkan Dokumen</div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Dari Proforma Invoice</label>
+                  <select class="cfg-select"
+                          x-model="$store.doc.linkInvoicePFIId"
+                          @change="$store.doc.linkInvoiceFromPFI($event.target.value)">
+                    <option value="">— Pilih PFI —</option>
+                    <template x-for="pfi in $store.doc.linkInvoicePFIOptions" :key="pfi.id">
+                      <option :value="pfi.id" x-text="pfi.doc_no + ' · ' + pfi.party_name"></option>
+                    </template>
+                  </select>
+                  <small class="cfg-hint">Memuat data customer, pengiriman, syarat bayar, jatuh tempo (tanpa item)</small>
+                </div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Dari Surat Jalan</label>
+                  <select class="cfg-select"
+                          x-model="$store.doc.linkInvoiceDeliveryId"
+                          @change="$store.doc.linkInvoiceFromDelivery($event.target.value)">
+                    <option value="">— Pilih Surat Jalan —</option>
+                    <template x-for="sj in $store.doc.linkInvoiceDeliveryOptions" :key="sj.id">
+                      <option :value="sj.id" x-text="sj.doc_no + ' · ' + sj.party_name"></option>
+                    </template>
+                  </select>
+                  <small class="cfg-hint">Memuat item barang yang sudah terkirim</small>
+                </div>
+
+                <div class="cfg-field" x-show="$store.doc.linkInvoicePFIId || $store.doc.linkInvoiceDeliveryId" x-cloak>
+                  <label class="cfg-label">Referensi</label>
+                  <div class="so-ops-info">
+                    <span x-show="$store.doc.linkInvoicePFIId" x-text="$store.doc.linkInvoicePFIRef"></span>
+                    <span x-show="$store.doc.linkInvoicePFIId && $store.doc.linkInvoiceDeliveryId">, </span>
+                    <span x-show="$store.doc.linkInvoiceDeliveryId" x-text="$store.doc.linkInvoiceDeliveryRef"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Hubungkan Dokumen (Delivery only) ─────────────── -->
+              <div class="options-subsection region"
+                   data-map="documents.parent_doc_id"
+                   x-show="$store.doc.type === 'delivery'" x-cloak>
+                <span class="db-tag">documents</span>
+                <div class="options-section__title">Hubungkan Dokumen</div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Dari Sales Order</label>
+                  <select class="cfg-select"
+                          x-model="$store.doc.linkDeliverySOId"
+                          @change="$store.doc.linkDeliveryFromSO($event.target.value)">
+                    <option value="">— Pilih Sales Order —</option>
+                    <template x-for="so in $store.doc.linkDeliverySOOptions" :key="so.id">
+                      <option :value="so.id" x-text="so.doc_no + ' · ' + so.party_name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <div class="cfg-field" x-show="$store.doc.linkDeliverySOId" x-cloak>
+                  <label class="cfg-label">Referensi</label>
+                  <div class="so-ops-info" x-text="$store.doc.linkDeliveryFromRef || ''"></div>
+                </div>
+              </div>
+
+              <!-- ── Hubungkan Dokumen (PO only) ───────────────── -->
+              <div class="options-subsection region"
+                   data-map="documents.parent_doc_id"
+                   x-show="$store.doc.type === 'po'" x-cloak>
+                <span class="db-tag">documents</span>
+                <div class="options-section__title">Hubungkan Dokumen</div>
+
+                <div class="cfg-field">
+                  <label class="cfg-label">Dari Sales Order</label>
+                  <select class="cfg-select"
+                          x-model="$store.doc.linkPODocId"
+                          @change="$store.doc.startPOCreation($event.target.value)">
+                    <option value="">— Pilih Sales Order —</option>
+                    <template x-for="so in $store.doc.linkPurchaseOrderOptions" :key="so.id">
+                      <option :value="so.id" x-text="so.doc_no + ' · ' + so.party_name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <template x-if="$store.doc.linkPODocId">
+                  <div class="cfg-field">
+                    <label class="cfg-label">
+                      Supplier <small x-text="'(' + $store.doc.linkPOSuppliers.length + ')'"></small>
+                    </label>
+                    <template x-if="$store.doc.linkPOSuppliers.length === 0">
+                      <div class="so-ops-info" style="color:var(--c-ink-3)">Tidak ada supplier dengan pricing data</div>
+                    </template>
+                    <div class="po-supplier-list">
+                      <template x-for="s in $store.doc.linkPOSuppliers" :key="s.id">
+                        <label class="po-supplier-check">
+                          <input type="checkbox"
+                                 :value="s.id"
+                                 :checked="$store.doc.selectedPOSupplierIds.includes(s.id)"
+                                 @change="$store.doc.selectedPOSupplierIds.includes(s.id)
+                                   ? $store.doc.selectedPOSupplierIds = $store.doc.selectedPOSupplierIds.filter(id => id !== s.id)
+                                   : $store.doc.selectedPOSupplierIds.push(s.id)" />
+                          <span x-text="s.name"></span>
+                          <small x-text="'(' + s.lineCount + ' item)'"></small>
+                        </label>
+                      </template>
+                    </div>
+                    <button class="cfg-btn cfg-btn--primary"
+                            x-show="$store.doc.selectedPOSupplierIds.length > 0"
+                            @click="$store.doc.createPOFromSO()"
+                            x-text="$store.doc.selectedPOSupplierIds.length > 1
+                              ? 'Buat ' + $store.doc.selectedPOSupplierIds.length + ' PO'
+                              : 'Buat PO'"></button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pages container: data-layout switches stack/side. htmx swaps
+               the body partial into #doc-body. -->
+          <div class="pages" :data-layout="$store.doc.pageLayout">
+            <div id="doc-body">
+              <div class="htmx-indicator">Memuat dokumen…</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+    </div><!-- /.app__main -->
+  </div>
+
+</body>
+</html>

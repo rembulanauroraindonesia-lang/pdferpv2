@@ -1,0 +1,155 @@
+<!--
+  PARTIAL: parties.html  (loaded by htmx into #doc-body)
+  Master data CRUD — parties (customers/suppliers) with add/edit/delete/active.
+  Uses $store.parties (PartyStore).
+-->
+<div class="parties-view">
+
+  <!-- Header -->
+  <div class="parties-view__header">
+    <div>
+      <h1 class="parties-view__title">PARTIES</h1>
+      <span class="parties-view__count">
+        <span x-text="$store.parties.list.filter(p=>p.is_active).length"></span> aktif ·
+        <span x-text="$store.parties.list.filter(p=>!p.is_active).length"></span> nonaktif ·
+        <span x-text="$store.parties.list.length"></span> total
+      </span>
+    </div>
+    <button class="pfi-beli__btn-approve" @click="$store.parties.openModal(null)">+ Tambah Baru</button>
+  </div>
+
+  <!-- Card grid -->
+  <div class="parties-view__grid">
+    <template x-for="p in $store.parties.list" :key="p.id">
+      <div class="party-card" :class="{ 'party-card--inactive': !p.is_active }">
+
+        <!-- Status dot + name -->
+        <div class="party-card__head">
+          <div class="party-card__title-row">
+            <span class="party-card__dot" :class="p.is_active ? 'party-card__dot--active' : 'party-card__dot--inactive'"></span>
+            <h2 class="party-card__name" x-text="p.name"></h2>
+          </div>
+          <div class="party-card__actions">
+            <button class="party-card__act" @click="$store.parties.openModal(p)" title="Edit">✎</button>
+            <button class="party-card__act" @click="$store.parties.toggleActive(p.id)"
+                    :title="p.is_active ? 'Nonaktifkan' : 'Aktifkan'"
+                    x-text="p.is_active ? '⊙' : '◉'"></button>
+            <button class="party-card__act party-card__act--del" @click="$store.parties.remove(p.id)" title="Hapus">✕</button>
+          </div>
+        </div>
+
+        <!-- PIC -->
+        <div class="party-card__row">
+          <span class="party-card__icon">👤</span>
+          <span x-text="p.contact_person"></span>
+          <template x-if="p.contact_phone">
+            <span class="party-card__phone" x-text="' · ' + p.contact_phone"></span>
+          </template>
+        </div>
+
+        <!-- Address -->
+        <div class="party-card__row">
+          <span class="party-card__icon">📍</span>
+          <span class="party-card__address" x-text="p.address || '—'"></span>
+        </div>
+
+        <!-- Bank -->
+        <template x-if="p.bank_name">
+          <div class="party-card__bank">
+            <div class="party-card__bank-header">
+              <span class="party-card__icon">🏦</span>
+              <span x-text="p.bank_name"></span>
+            </div>
+            <div class="party-card__bank-detail">
+              <span x-text="p.bank_account"></span>
+              <span class="party-card__bank-a-n" x-text="'a/n ' + p.bank_account_name"></span>
+            </div>
+          </div>
+        </template>
+
+        <!-- ID badge -->
+        <div class="party-card__footer">
+          <span class="party-card__id" x-text="'#' + p.id.slice(3)"></span>
+          <span class="party-card__status" x-text="p.is_active ? 'AKTIF' : 'NONAKTIF'"
+                :class="p.is_active ? 'party-card__status--active' : 'party-card__status--inactive'"></span>
+        </div>
+
+      </div>
+    </template>
+  </div>
+
+  <!-- Empty state -->
+  <template x-if="$store.parties.list.length === 0">
+    <div class="parties-view__empty">
+      <div class="parties-view__empty-icon">👥</div>
+      <p class="parties-view__empty-text">Belum ada data pihak / mitra.</p>
+      <button class="pfi-beli__btn-approve" @click="$store.parties.openModal(null)">+ Tambah Baru</button>
+    </div>
+  </template>
+
+  <!-- ════════════════ MODAL: Add / Edit ════════════════ -->
+  <div class="party-modal-overlay" x-show="$store.parties.modalOpen" x-transition x-cloak
+       @click.self="$store.parties.closeModal()">
+    <div class="party-modal">
+      <div class="party-modal__head">
+        <h3 x-text="$store.parties.editing ? 'Edit Mitra' : 'Tambah Mitra Baru'"></h3>
+        <button class="party-modal__close" @click="$store.parties.closeModal()">✕</button>
+      </div>
+
+      <div class="party-modal__body">
+        <label class="qa__field">
+          <span>Nama Perusahaan *</span>
+          <input type="text" x-model="$store.parties.draft.name"
+                 @keydown.enter="$store.parties.save()"
+                 placeholder="PT / CV / ..." />
+        </label>
+        <label class="qa__field">
+          <span>Alamat Kantor</span>
+          <input type="text" x-model="$store.parties.draft.address"
+                 placeholder="Jl. ..." />
+        </label>
+        <div class="party-modal__row">
+          <label class="qa__field">
+            <span>Nama PIC</span>
+            <input type="text" x-model="$store.parties.draft.contact_person"
+                   placeholder="Ibu / Bpk ..." />
+          </label>
+          <label class="qa__field">
+            <span>No. Kontak PIC</span>
+            <input type="text" x-model="$store.parties.draft.contact_phone"
+                   placeholder="(+62) ..." />
+          </label>
+        </div>
+
+        <div class="party-modal__divider">Info Bank</div>
+
+        <div class="party-modal__row party-modal__row--3col">
+          <label class="qa__field">
+            <span>Bank</span>
+            <input type="text" x-model="$store.parties.draft.bank_name"
+                   placeholder="BCA / Mandiri / ..." />
+          </label>
+          <label class="qa__field">
+            <span>No. Rekening</span>
+            <input type="text" x-model="$store.parties.draft.bank_account"
+                   placeholder="..." />
+          </label>
+          <label class="qa__field">
+            <span>Atas Nama</span>
+            <input type="text" x-model="$store.parties.draft.bank_account_name"
+                   placeholder="..." />
+          </label>
+        </div>
+      </div>
+
+      <div class="party-modal__foot">
+        <button class="qa__btn qa__btn--ghost" @click="$store.parties.closeModal()">Batal</button>
+        <button class="qa__btn qa__btn--primary" @click="$store.parties.save()"
+                :disabled="!$store.parties.draft.name.trim()">
+          <span x-text="$store.parties.editing ? 'Simpan' : 'Tambah'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

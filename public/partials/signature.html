@@ -1,0 +1,155 @@
+<!--
+  PARTIAL: signature.html  (loaded by htmx into #doc-body)
+  Master data CRUD — signatures (tanda tangan) with name, role, uploaded signature image.
+  Uses $store.signatures (SignatureStore).
+-->
+<div class="parties-view">
+
+  <!-- Header -->
+  <div class="parties-view__header">
+    <div>
+      <h1 class="parties-view__title">SIGNATURE</h1>
+      <span class="parties-view__count">
+        <span x-text="$store.signatures.list.filter(s=>s.is_active).length"></span> aktif ·
+        <span x-text="$store.signatures.list.filter(s=>!s.is_active).length"></span> nonaktif ·
+        <span x-text="$store.signatures.list.length"></span> total
+      </span>
+    </div>
+    <button class="pfi-beli__btn-approve" @click="$store.signatures.openModal(null)">+ Tambah Baru</button>
+  </div>
+
+  <!-- Table -->
+  <table class="sig-table">
+    <thead>
+      <tr>
+        <th class="sig-table__status"></th>
+        <th>Nama</th>
+        <th>Jabatan</th>
+        <th>Tanda Tangan</th>
+        <th class="sig-table__actions">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <template x-for="s in $store.signatures.list" :key="s.id">
+        <tr class="sig-row" :class="{ 'sig-row--inactive': !s.is_active }">
+          <!-- Status dot -->
+          <td class="sig-table__status">
+            <span class="sig-dot" :class="s.is_active ? 'sig-dot--active' : 'sig-dot--inactive'"></span>
+          </td>
+          <!-- Name -->
+          <td>
+            <span class="sig-row__name" x-text="s.name"></span>
+          </td>
+          <!-- Role -->
+          <td>
+            <span class="sig-row__role" x-text="s.role"></span>
+          </td>
+          <!-- Signature image preview -->
+          <td>
+            <div class="sig-row__img-wrap" x-show="s.signature_file" x-cloak>
+              <!-- We use a static path convention: /uploads/signatures/<filename> -->
+              <img class="sig-row__img" :src="'/uploads/signatures/' + s.signature_file"
+                   @click="window.open('/uploads/signatures/' + s.signature_file, '_blank')"
+                   title="Klik untuk lihat penuh" />
+            </div>
+            <span class="sig-row__noimg" x-show="!s.signature_file">—</span>
+          </td>
+          <!-- Actions -->
+          <td class="sig-table__actions">
+            <button class="party-card__act" @click="$store.signatures.openModal(s)" title="Edit">✎</button>
+            <button class="party-card__act" @click="$store.signatures.toggleActive(s.id)"
+                    :title="s.is_active ? 'Nonaktifkan' : 'Aktifkan'"
+                    x-text="s.is_active ? '⊙' : '◉'"></button>
+            <button class="party-card__act party-card__act--del" @click="$store.signatures.remove(s.id)" title="Hapus">✕</button>
+          </td>
+        </tr>
+      </template>
+      <template x-if="$store.signatures.list.length === 0">
+        <tr>
+          <td colspan="5" class="sig-row__empty">Belum ada data signature. Klik <b>+ Tambah Baru</b> untuk menambahkan.</td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+
+  <!-- ════════════════ MODAL FORM ════════════════ -->
+  <div class="modal-overlay" x-show="$store.signatures.modalOpen" x-transition.opacity
+       @click.self="$store.signatures.closeModal()" style="display:none" x-cloak>
+    <div class="modal modal--sig" @click.stop>
+      <div class="modal__head">
+        <h3 x-text="$store.signatures.editing ? 'Edit Signature' : 'Tambah Signature Baru'"></h3>
+        <button class="modal__close" @click="$store.signatures.closeModal()">✕</button>
+      </div>
+
+      <div class="modal__body">
+        <!-- Name -->
+        <label class="sig-form__field">
+          <span>Nama</span>
+          <input type="text" class="field" x-model="$store.signatures.draft.name"
+                 placeholder="Nama lengkap penanda tangan" />
+        </label>
+
+        <!-- Role -->
+        <label class="sig-form__field">
+          <span>Jabatan</span>
+          <input type="text" class="field" x-model="$store.signatures.draft.role"
+                 placeholder="e.g. Direktur, Marketing, Finance" />
+        </label>
+
+        <!-- Signature upload -->
+        <label class="sig-form__field">
+          <span>Upload Tanda Tangan</span>
+        </label>
+        <div x-data="fileUpload($store.signatures.draft.signature_file || '', (v) => $store.signatures.draft.signature_file = v)"
+             class="sig-form__upload">
+          <input type="file" accept=".png,.jpg,.jpeg" style="display:none"
+                 x-ref="up"
+                 @change="handlePick($event)" />
+
+          <!-- Empty state: choose file -->
+          <label x-show="!file">
+            <span @click="$refs.up.click()" class="pfi-beli__file-btn">📎 Pilih file</span>
+          </label>
+
+          <!-- Filled: preview + replace -->
+          <div x-show="file" x-cloak class="sig-form__preview">
+            <img x-show="previewUrl" :src="previewUrl"
+                 class="sig-form__thumb" @click="openViewer()"
+                 title="Klik untuk lihat penuh" />
+            <span x-show="!previewUrl" class="pfi-beli__file-icon">📄</span>
+            <b x-text="file" @click="openViewer()" style="cursor:pointer"></b>
+            <button @click="replace()" class="pfi-beli__file-replace" title="Ganti file">[G]</button>
+            <button @click="clearFile()" class="pfi-beli__file-clear" title="Hapus file">×</button>
+          </div>
+
+          <!-- History log -->
+          <div x-show="log.length" x-cloak class="pfi-beli__file-log">
+            <small>Riwayat:</small>
+            <template x-for="(f,i) in log" :key="i">
+              <span class="pfi-beli__file-log-item" x-text="f"></span>
+            </template>
+          </div>
+
+          <!-- Viewer popup -->
+          <div class="upload-viewer" x-show="viewerOpen" x-cloak @click.self="closeViewer()">
+            <button class="upload-viewer__close" @click="closeViewer()">✕</button>
+            <img x-show="isImage && previewUrl" :src="previewUrl" class="upload-viewer__img" />
+            <div x-show="!isImage || !previewUrl" class="upload-viewer__placeholder">
+              <span class="upload-viewer__file-icon" x-text="fileIcon"></span>
+              <b x-text="file"></b>
+              <p>Tidak ada pratinjau</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="qa__btn qa__btn--ghost" @click="$store.signatures.closeModal()">Batal</button>
+        <button class="qa__btn qa__btn--primary" @click="$store.signatures.save()">
+          <span x-text="$store.signatures.editing ? 'Simpan' : 'Tambah'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

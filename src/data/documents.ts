@@ -1,0 +1,377 @@
+import type { Document } from "@/types/schema";
+
+/**
+ * CALON COLLECTION: documents
+ * ----------------------------------------------------------------------------
+ * DB note: satu record = satu dokumen. type menentukan layout & workflow.
+ * subtotal/ppn/grand_total TIDAK disimpan — derived dari document_lines
+ * lewat src/lib/calc.ts.
+ *
+ * Relasi:
+ *   company_id    → companies.id
+ *   party_id      → parties.id
+ *   signatory_id  → signatories.id
+ *
+ * Seed: 4 dokumen quotation untuk testing scroller. Status campuran supaya
+ * badge tone-nya kelihatan. saved_at/last_revision_at biarkan undefined —
+ * di-set saat runtime oleh Simpan/Revisi.
+ */
+export const documents: Document[] = [
+  {
+    id: "doc_0001",
+    doc_no: "QTN/RAI/26/0001",
+    type: "quotation",
+    direction: "jual",
+    date: "2026-05-11",
+    subject: "Penawaran Harga",
+    salutation: "Dengan Hormat,\nKami ingin memberikan penawaran terbaik kami untuk material:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_gandasari",
+    signatory_id: "si_winarto",
+    marketing_staff_id: "st_budi",
+    shipping_terms: "Franco",
+  },
+  {
+    id: "doc_0002",
+    doc_no: "QTN/RAI/26/0002",
+    type: "quotation",
+    direction: "jual",
+    date: "2026-05-12",
+    subject: "Penawaran Harga",
+    salutation: "Dengan Hormat,\nKami ingin memberikan penawaran terbaik kami untuk material:",
+    status: "draft",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_tigajaya",
+    signatory_id: "si_winarto",
+  },
+  {
+    id: "doc_0003",
+    doc_no: "QTN/RAI/26/0003",
+    type: "quotation",
+    direction: "jual",
+    date: "2026-05-18",
+    subject: "Penawaran Harga",
+    salutation: "Dengan Hormat,\nKami ingin memberikan penawaran terbaik kami untuk material:",
+    status: "draft",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_panca",
+    signatory_id: "si_winarto",
+  },
+  {
+    id: "doc_0004",
+    doc_no: "QTN/RAI/26/0004",
+    type: "quotation",
+    direction: "jual",
+    date: "2026-05-21",
+    subject: "Penawaran Harga",
+    salutation: "Dengan Hormat,\nKami ingin memberikan penawaran terbaik kami untuk material:",
+    status: "draft",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_spm",
+    signatory_id: "si_winarto",
+  },
+  // ── Sales Order seed (dibuat dari Penawaran doc_0001) ───────────────
+  // Menunjukkan semua field SO: parent_doc_id, customer_po_no, file PO,
+  // shipping_address (beda dari alamat customer), shipping_terms,
+  // delivery_date, due_date.
+  {
+    id: "doc_so_0001",
+    doc_no: "SO/RAI/26/0001",
+    type: "sales_order",
+    direction: "jual",
+    date: "2026-05-12",
+    subject: "Sales Order",
+    salutation: "Dengan Hormat,\nBersama ini kami sampaikan pesanan Anda dengan rincian sebagai berikut:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_gandasari",
+    signatory_id: "si_winarto",
+    parent_doc_id: "doc_0001",
+    marketing_staff_id: "st_budi",
+    customer_po_no: "PO-GDS-2026-0042",
+    customer_po_file: "PO_Gandasari_2026_0042.pdf",
+    shipping_address:
+      "PT Dok dan Perkapalan Gandasari\n" +
+      "Kawasan Industri Margomulyo, Blok F-12\n" +
+      "Surabaya 60183, Jawa Timur",
+    shipping_terms: "Franco",
+    delivery_date: "2026-05-20",
+    due_date: "2026-06-11",
+  },
+  // ── Proforma Invoice seed ──────────────────────────────────────────
+    {
+      id: "doc_pfi_0001",
+      doc_no: "PFI/RAI/26/0001",
+      type: "proforma_invoice",
+      direction: "jual",
+      date: "2026-05-15",
+      subject: "Proforma Invoice",
+      salutation: "Dengan Hormat,\nBerdasarkan Sales Order yang telah disepakati, berikut Proforma Invoice untuk material:",
+      status: "sent",
+      page_layout: "stack",
+      revision_count: 0,
+      company_id: "co_rembulan_aurora",
+      party_id: "pa_gandasari",
+      signatory_id: "si_winarto",
+      marketing_staff_id: "st_budi",
+      parent_doc_id: "doc_so_0001",
+      payment_method: "nett",
+      payment_net_days: 30,
+      shipping_address:
+        "PT Dok dan Perkapalan Gandasari\n" +
+        "Kawasan Industri Margomulyo, Blok F-12\n" +
+        "Surabaya 60183, Jawa Timur",
+      shipping_terms: "Franco",
+      due_date: "2026-06-11",
+    },
+    // ── PFI BELI seed ──────────────────────────────────────────────────
+    {
+      id: "doc_pfi_beli_0001",
+      doc_no: "PFI/RAI/26/0002",
+      type: "proforma_invoice",
+      direction: "beli",
+      date: "2026-07-11",
+      subject: "Proforma Invoice Pembelian – PT Sumber Pratama Mandiri",
+      salutation: "",
+      status: "draft",
+      page_layout: "stack",
+      revision_count: 0,
+      company_id: "co_rembulan_aurora",
+      party_id: "pa_spm",
+      payment_method: "nett",
+      payment_net_days: 30,
+      payment_terms_beli: "Nett 30 Hari",
+      due_date: "2026-08-10",
+      supplier_bank_name: "BCA",
+      supplier_bank_account: "123-456-7890",
+      supplier_bank_account_name: "PT Sumber Pratama Mandiri",
+      finance_approval: "pending",
+      director_approval: "pending",
+    },
+  // ── Delivery seed ──────────────────────────────────────────────────
+  {
+    id: "doc_do_0001",
+    doc_no: "SJ/RAI/26/0001",
+    type: "delivery",
+    direction: "jual",
+    date: "2026-05-20",
+    subject: "Surat Jalan",
+    salutation: "Dengan Hormat,\nBarang-barang tersebut di bawah ini telah kami kirim:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_gandasari",
+    signatory_id: "si_winarto",
+    parent_doc_id: "doc_so_0001",
+    shipping_address:
+      "PT Dok dan Perkapalan Gandasari\n" +
+      "Kawasan Industri Margomulyo, Blok F-12\n" +
+      "Surabaya 60183, Jawa Timur",
+    shipping_terms: "Franco",
+    delivery_date: "2026-05-20",
+  },
+  // ── Pickup Memo seed ───────────────────────────────────────────────
+  {
+    id: "doc_pm_0001",
+    doc_no: "PM/RAI/26/0001",
+    type: "pickup",
+    direction: "beli",
+    date: "2026-05-20",
+    subject: "Pickup Memo",
+    salutation: "Dengan Hormat,\nBerikut pickup memo untuk material yang telah siap diambil:",
+    status: "draft",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_spm",
+    parent_doc_id: "doc_po_0001",
+    shipping_address:
+      "PT Sumber Pratama Mandiri\n" +
+      "Jl. Daan Mogot No. 88\n" +
+      "Jakarta Barat",
+    shipping_terms: "Franco",
+  },
+  // ── Invoice seed ───────────────────────────────────────────────────
+  {
+    id: "doc_inv_0001",
+    doc_no: "INV/RAI/26/0001",
+    type: "invoice",
+    direction: "jual",
+    date: "2026-05-22",
+    subject: "Invoice",
+    salutation: "Dengan Hormat,\nBerikut invoice untuk material yang telah dikirim:",
+    status: "draft",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_gandasari",
+    signatory_id: "si_winarto",
+    parent_doc_id: "doc_do_0001",
+    due_date: "2026-06-21",
+  },
+  // ══════════════════════════════════════════════════════════════════════
+  //  TEST SEED — Chain Penjualan #2: PT Panca Wira                       
+  //  Quotation → SO → PFI → Surat Jalan → Invoice (all linked, all sent)  
+  // ══════════════════════════════════════════════════════════════════════
+  {
+    id: "doc_0010",
+    doc_no: "QTN/RAI/26/0005",
+    type: "quotation",
+    direction: "jual",
+    date: "2026-06-01",
+    subject: "Penawaran Harga",
+    salutation: "Dengan Hormat,\nKami ingin memberikan penawaran terbaik kami untuk material:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_panca",
+    signatory_id: "si_winarto",
+    marketing_staff_id: "st_budi",
+    shipping_terms: "Franco",
+    payment_method: "nett",
+    payment_net_days: 15,
+  },
+  {
+    id: "doc_so_0010",
+    doc_no: "SO/RAI/26/0002",
+    type: "sales_order",
+    direction: "jual",
+    date: "2026-06-03",
+    subject: "Sales Order",
+    salutation: "Dengan Hormat,\nBersama ini kami sampaikan pesanan Anda dengan rincian sebagai berikut:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_panca",
+    signatory_id: "si_winarto",
+    parent_doc_id: "doc_0010",
+    marketing_staff_id: "st_budi",
+    shipping_address:
+      "PT Panca Wira\n" +
+      "Jl. MH Thamrin No. 22\n" +
+      "Tangerang",
+    shipping_terms: "Franco",
+    due_date: "2026-06-18",
+    payment_method: "nett",
+    payment_net_days: 15,
+  },
+  {
+    id: "doc_pfi_0010",
+    doc_no: "PFI/RAI/26/0003",
+    type: "proforma_invoice",
+    direction: "jual",
+    date: "2026-06-05",
+    subject: "Proforma Invoice",
+    salutation: "Dengan Hormat,\nBerdasarkan Sales Order yang telah disepakati, berikut Proforma Invoice untuk material:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_panca",
+    signatory_id: "si_winarto",
+    marketing_staff_id: "st_budi",
+    parent_doc_id: "doc_so_0010",
+    payment_method: "nett",
+    payment_net_days: 15,
+    shipping_terms: "Franco",
+    due_date: "2026-06-20",
+  },
+  {
+    id: "doc_do_0010",
+    doc_no: "SJ/RAI/26/0002",
+    type: "delivery",
+    direction: "jual",
+    date: "2026-06-10",
+    subject: "Surat Jalan",
+    salutation: "Dengan Hormat,\nBarang-barang tersebut di bawah ini telah kami kirim:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_panca",
+    signatory_id: "si_winarto",
+    parent_doc_id: "doc_so_0010",
+    shipping_address:
+      "PT Panca Wira\n" +
+      "Jl. MH Thamrin No. 22\n" +
+      "Tangerang",
+    shipping_terms: "Franco",
+    delivery_date: "2026-06-10",
+    delivery_plat_no: "B 9876 XY",
+    delivery_vehicle_type: "Colt Diesel",
+    delivery_capacity_kg: 4000,
+    delivery_driver_name: "Suparno",
+    delivery_driver_phone: "0812-9988-7766",
+  },
+  {
+    id: "doc_inv_0010",
+    doc_no: "INV/RAI/26/0002",
+    type: "invoice",
+    direction: "jual",
+    date: "2026-06-12",
+    subject: "Invoice",
+    salutation: "Dengan Hormat,\nBerikut invoice untuk material yang telah dikirim:",
+    status: "draft",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_panca",
+    signatory_id: "si_winarto",
+    parent_doc_id: "doc_pfi_0010",
+    due_date: "2026-06-27",
+  },
+  // ── Purchase Order seed ────────────────────────────────────────────
+  {
+    id: "doc_po_0001",
+    doc_no: "PO/RAI/26/0001",
+    type: "po",
+    direction: "beli",
+    date: "2026-05-08",
+    subject: "Purchase Order",
+    salutation: "Dengan Hormat,\nKami memesan material berikut dari Bapak/Ibu:",
+    status: "sent",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_spm",
+    signatory_id: "si_winarto",
+    due_date: "2026-05-30",
+  },
+  // ── Payment seed
+  {
+    id: "doc_pay_0001",
+    doc_no: "PAY/RAI/26/0001",
+    type: "payment",
+    direction: "beli",
+    date: "2026-06-01",
+    subject: "Bukti Pembayaran",
+    salutation: "Dengan Hormat,\nBerikut bukti pembayaran untuk invoice:",
+    status: "draft",
+    page_layout: "stack",
+    revision_count: 0,
+    company_id: "co_rembulan_aurora",
+    party_id: "pa_spm",
+    signatory_id: "si_winarto",
+    parent_doc_id: "doc_po_0001",
+  },
+];
+
+export const documentById = (id: string): Document | undefined =>
+  documents.find((d) => d.id === id);
+
+export const documentsByType = (type: Document["type"]): Document[] =>
+  documents.filter((d) => d.type === type);

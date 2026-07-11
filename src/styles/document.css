@@ -1,0 +1,2146 @@
+/* ============================================================================
+   DOCUMENT — the artifact. Paper on the desk.
+   Faithful to the source PDF: serif, A4-width, official-letter register.
+   ============================================================================ */
+
+/* ── Pages container: holds one or more A4 sheets ──────────────
+   Multi-page behavior controlled by data-layout:
+     "stack" (default) → pages flow vertically (scroll down)
+     "side"             → pages flow horizontally (scroll right) */
+.pages {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--s-2) var(--s-2) var(--s-5);
+}
+.pages[data-layout="side"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+/* The docBody wrapper holds the page articles directly. It's the real flex
+   container so stack/side layout + gap apply to the <article class="page">
+   siblings. Selector chain: .pages > #doc-body (htmx swap target) > .doc-body-wrap */
+.pages #doc-body,
+.pages .doc-body-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  align-items: center;
+}
+.pages[data-layout="side"] #doc-body,
+.pages[data-layout="side"] .doc-body-wrap {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+/* ── Single A4 page ────────────────────────────────────────────
+   Width 794px (A4 @96dpi), height = width × √2 ≈ 1123px. */
+.page {
+  width: var(--doc-w);
+  max-width: 100%;
+  flex-shrink: 0;
+  background: var(--c-surface);
+  box-shadow: var(--shadow-paper);
+  border-radius: var(--r-2);
+  padding: 48px 56px;
+  font-family: var(--font-serif);
+  font-size: var(--td-body);
+  line-height: 1.55;
+  color: var(--c-ink);
+  box-sizing: border-box;
+}
+/* In stack layout, page is locked to A4; content scrolls within when it
+   overflows. PRODUCTION SEAM: true multi-page split (rows flowing onto a
+   2nd <article class="page">) needs post-render measurement + DOM split,
+   which belongs in the BFF template when PocketBase lands. For the mockup,
+   the A4 sheet stays locked and overflow scrolls inside it — visually
+   honest about the page boundary. The "Opsi Tampilan" stack/side controls
+   the direction of that overflow scroll. */
+.pages:not([data-layout="side"]) .page {
+  height: calc(var(--doc-w) * 1.4142);
+  overflow-y: auto;
+}
+.pages[data-layout="side"] .page {
+  height: calc(var(--doc-w) * 1.4142);
+}
+
+/* ── Letterhead ──────────────────────────────────────────────── */
+.doc__head {
+  display: flex;
+  /* stretch so the logo column matches the text block height exactly,
+     whatever the company name/address length */
+  align-items: stretch;
+  gap: var(--s-4);
+  padding-bottom: var(--s-4);
+  border-bottom: 2px solid var(--c-ink);
+  margin-bottom: var(--s-5);
+}
+.doc__head-left {
+  flex: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.doc__logo {
+  display: block;
+  /* Fixed height. +20% from the previous 64px. Reliable across all browsers;
+     the stretch approach hit a flexbox height-resolution cycle. */
+  height: 77px;
+  width: auto;
+  border-radius: var(--r-1);
+  object-fit: contain;
+}
+.doc__head-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Header layout: logo+company (flex:1) left, title (auto) right.
+   This is the default for ALL modules — no per-module override needed. */
+
+/* ASCII title block: monospace, no extra spacing, no anti-aliasing artifacts
+   that break the block letter shapes. Sized to match the left company-info
+   block height. */
+.doc__title-ascii {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  color: var(--c-ink);
+  white-space: pre;
+  text-align: left;
+  font-weight: 600;
+  /* keep raw block-letter shapes crisp */
+  letter-spacing: 0;
+  font-variant-ligatures: none;
+}
+/* Company text block beside logo — must fill remaining head-left space */
+.doc__issuer {
+  flex: 1;
+  min-width: 0;
+}
+.doc__issuer-name {
+  font-size: var(--td-title);
+  font-weight: var(--tw-bold);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.doc__issuer-addr {
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+  margin-top: 4px;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+.doc__issuer-phone { font-size: var(--td-small); color: var(--c-ink-2); }
+.doc__issuer-line { font-size: var(--td-small); color: var(--c-ink-2); line-height: 1.4; }
+.doc__issuer-line + .doc__issuer-line { margin-top: 2px; }
+.doc__logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 77px;
+  height: 77px;
+  background: var(--c-ink);
+  color: var(--c-paper);
+  font-size: 32px;
+  font-weight: 700;
+  border-radius: var(--r-1);
+}
+
+/* ── Document title: monospace uppercase (ASCII/terminal aesthetic) ── */
+.doc__title {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo,
+               Consolas, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-align: right;
+  text-transform: uppercase;
+  font-variant-ligatures: none;
+}
+.doc__title small {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: var(--td-small);
+  font-weight: 400;
+  color: var(--c-ink-3);
+  letter-spacing: 0;
+  margin-top: 3px;
+  text-transform: none;
+}
+
+/* ── SO-specific sections: shipping address, shipping terms, PO file ── */
+/* Side-by-side row: shipping address (flex:1) + shipping terms (auto) */
+.doc__ship-row {
+  display: flex;
+  gap: var(--s-4);
+  align-items: flex-start;
+  margin-bottom: var(--s-5);
+}
+.doc__ship-row .doc__ship { flex: 1; margin-bottom: 0; }
+.doc__ship-row .doc__ship-terms { flex-shrink: 0; margin-bottom: 0; }
+
+.doc__ship,
+.doc__ship-terms {
+  margin-bottom: var(--s-5);
+}
+.doc__ship h3,
+.doc__ship-terms h3 {
+  font-size: var(--td-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-ink-2);
+  margin: 0 0 var(--s-2) 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--c-line);
+}
+.doc__ship-hint {
+  color: var(--c-ink-3);
+  font-style: italic;
+  margin-bottom: var(--s-2);
+}
+.ship-terms-row {
+  display: flex;
+  gap: var(--s-5);
+  align-items: center;
+}
+.ship-term-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: var(--td-body);
+  font-weight: 600;
+}
+.ship-term-radio input { cursor: pointer; }
+
+/* PO file picker — looks like a small inline button */
+.doc__file-pick { display: flex; align-items: center; gap: var(--s-2); }
+.po-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--c-paper);
+  border: 1px dashed var(--c-ink-3);
+  border-radius: var(--r-1);
+  font-size: var(--td-small);
+  cursor: pointer;
+  color: var(--c-ink-2);
+  transition: all 0.15s;
+}
+.po-upload-btn:hover {
+  border-color: var(--c-ink);
+  color: var(--c-ink);
+  background: var(--c-bg-2);
+}
+.po-uploaded {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+}
+.po-uploaded b {
+  font-weight: 600;
+  color: var(--c-ink);
+}
+.po-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: 1px solid var(--c-ink-3);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--c-ink-3);
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+.po-clear:hover {
+  background: var(--c-danger);
+  color: var(--c-paper);
+  border-color: var(--c-danger);
+}
+
+/* ── Date field + calendar popup ─────────────────────────────── */
+.date-field { cursor: pointer; user-select: none; }
+.doc__meta-row:has(.cal) { position: relative; }
+
+/* ── Lifecycle meta rows (audit stamps, distinct from doc date) ── */
+.doc__meta-row--lifecycle { padding-top: 6px; }
+.doc__meta-stamp {
+  font-family: var(--font-mono);
+  font-size: var(--td-small);
+  color: var(--c-ink-3);
+}
+
+/* ── Locked document state ─────────────────────────────────────
+   When the doc is saved, fields become read-only: no hover affordance,
+   slightly muted, a subtle ribbon marks it locked. */
+.page--locked .field {
+  cursor: default;
+}
+.page--locked .field:hover {
+  border-color: transparent;
+  background: transparent;
+}
+.page--locked [contenteditable] {
+  pointer-events: none; /* prevent editing while locked */
+  user-select: text;
+}
+.page--locked .date-field { cursor: default; }
+/* faint locked indicator stripe at the top of the page */
+.page--locked::before {
+  content: "TERKUNCI — klik Revisi untuk mengedit";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  font-family: var(--tf-label);
+  font-size: var(--td-micro);
+  font-weight: var(--tw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #fff;
+  background: var(--c-ink-3);
+  padding: 3px 0;
+  border-radius: var(--r-2) var(--r-2) 0 0;
+}
+.page { position: relative; }
+
+.cal {
+  position: absolute;
+  top: 100%;
+  left: 80px;
+  z-index: 50;
+  margin-top: 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-2);
+  box-shadow: var(--shadow-paper);
+  padding: var(--s-3);
+  width: 248px;
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+}
+.cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s-2);
+}
+.cal__title { font-weight: 600; font-size: var(--t-sm); color: var(--c-ink); }
+.cal__nav {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  background: var(--c-surface);
+  color: var(--c-ink-2);
+  font-size: var(--td-small);
+  line-height: 1;
+}
+.cal__nav:hover { background: var(--c-surface-3); color: var(--c-ink); }
+.cal__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.cal__weekdays span {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c-ink-3);
+  letter-spacing: 0.02em;
+}
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal__day {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-1);
+  font-size: var(--t-xs);
+  color: var(--c-ink);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.cal__day:hover { background: var(--c-surface-3); }
+.cal__day--out { color: var(--c-ink-3); opacity: 0.4; }
+.cal__day--today { font-weight: 700; color: var(--c-accent); }
+.cal__day--sel { background: var(--c-accent); color: #fff; font-weight: 600; }
+.cal__day--sel:hover { background: var(--c-accent-2); }
+.cal__today {
+  width: 100%;
+  margin-top: var(--s-2);
+  padding: 5px;
+  border: 1px solid var(--c-accent);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  border-radius: var(--r-1);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+.cal__today:hover { background: var(--c-accent); color: #fff; }
+
+/* ── Party recipient block (4 fields + picker) ───────────────── */
+.party-search {
+  width: 100%;
+  font-weight: 600;
+  font-size: var(--td-body);
+  padding: 1px 4px;
+}
+.party-search::placeholder { font-weight: 400; color: var(--c-ink-3); font-size: var(--td-small); }
+.party-address {
+  font-size: var(--td-body);
+  color: var(--c-ink-2);
+  line-height: 1.4;
+  margin-top: 4px;
+  white-space: pre-line;
+  min-height: 1em;
+}
+.party-pic-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: var(--td-body);
+  color: var(--c-ink-2);
+  flex-wrap: wrap;
+}
+.party-pic-label { color: var(--c-ink-3); font-weight: 600; }
+
+/* Party picker dropdown (mirrors .cal structure) */
+.pp {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  margin-top: 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-2);
+  box-shadow: var(--shadow-paper);
+  padding: var(--s-2);
+  width: 100%;
+  max-width: 280px;
+  max-height: 280px;
+  overflow-y: auto;
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+}
+.doc__recipient { position: relative; }
+/* Position context for the party search dropdown so it anchors to the
+   input directly (not at the bottom of the whole recipient section). */
+.party-input-wrap { position: relative; }
+.pp__item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: var(--r-1);
+  cursor: pointer;
+  gap: 1px;
+}
+.pp__item:hover { background: var(--c-surface-2); }
+.pp__name { font-weight: 600; color: var(--c-ink); font-size: var(--t-sm); }
+.pp__sub { font-size: var(--t-xs); color: var(--c-ink-3); }
+.pp__empty { padding: 10px 8px; color: var(--c-ink-3); font-size: var(--t-xs); text-align: center; }
+.pp__quickadd {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px;
+  border: 1px dashed var(--c-accent);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  border-radius: var(--r-1);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+.pp__quickadd:hover { background: var(--c-accent); color: #fff; }
+
+/* Quick Add form */
+.qa { padding: var(--s-3); }
+.qa__title { font-weight: 700; font-size: var(--t-sm); margin-bottom: var(--s-2); color: var(--c-ink); }
+.qa__field { display: flex; flex-direction: column; gap: 2px; margin-bottom: var(--s-2); }
+.qa__field span { font-size: var(--t-xs); color: var(--c-ink-3); font-weight: 600; }
+.qa__field input {
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  padding: 4px 6px;
+  font-size: var(--t-sm);
+}
+.qa__actions { display: flex; gap: var(--s-2); justify-content: flex-end; margin-top: var(--s-3); }
+.qa__btn {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--r-1);
+  border: 1px solid var(--c-line);
+  background: var(--c-surface);
+  color: var(--c-ink-2);
+  cursor: pointer;
+}
+.qa__btn--ghost:hover { background: var(--c-surface-3); }
+.qa__btn--primary { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+.qa__btn--primary:hover { background: var(--c-accent-2); }
+
+/* ── Editable field row + "Jadikan default" pill ─────────────── */
+.field-row {
+  position: relative;
+}
+.field-row--inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.field-label {
+  font-size: var(--td-small);
+  color: var(--c-ink-3);
+  font-weight: 600;
+}
+.field--multiline {
+  display: inline-block;
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+  line-height: 1.4;
+  white-space: pre-line;
+  margin-top: 4px;
+  min-height: 2.8em; /* 2 baris — tetap clickable walau kosong */
+  min-width: 100%;
+  cursor: text;
+  position: relative;
+}
+/* Arrow hint — tampil saat field kosong dan di-hover */
+.field--multiline:empty::after {
+  content: "↘ klik untuk mengisi";
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: var(--td-small);
+  color: var(--c-ink-3);
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Contact row: Tel + Email inline, separated by spacing */
+.doc__contact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-top: 4px;
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+}
+
+/* "Jadikan default" pill — appears only when field is focused. */
+.default-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  width: max-content;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 7px;
+  margin-left: 6px;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  border-radius: 999px;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+.default-pill:hover {
+  background: var(--c-accent);
+  color: #fff;
+}
+.field-row--inline .default-pill { margin-left: 4px; padding: 1px 6px; }
+
+/* ── Meta block (Tanggal / No / Perihal) ─────────────────────── */
+.doc__meta {
+  margin-bottom: var(--s-6);
+}
+.doc__meta-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--s-3);
+  font-size: var(--td-body);
+  padding: 2px 0;
+}
+.doc__meta-label {
+  color: var(--c-ink-2);
+}
+.doc__salutation {
+  margin-bottom: var(--s-5);
+  line-height: 1.7;
+  font-family: var(--tf-doc);
+  font-size: var(--td-body);
+}
+.doc__salutation .field--multiline { font-size: var(--td-body); color: var(--c-ink); }
+
+/* ── Line items table ────────────────────────────────────────── */
+.doc__lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--td-small);
+  margin-bottom: var(--s-5);
+  table-layout: fixed;
+}
+.doc__lines th {
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ink-3);
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1.5px solid var(--c-ink);
+}
+.doc__lines td {
+  padding: 5px var(--s-3);
+  border-bottom: 1px solid var(--c-line-2);
+  vertical-align: middle;
+  line-height: 1.3;
+}
+.doc__lines tr:last-child td { border-bottom: 1px solid var(--c-ink); }
+/* Empty state: when all items deleted, prompt to add the first one */
+.doc__line-empty td {
+  text-align: center;
+  padding: var(--s-4) var(--s-3);
+}
+.line-empty-add {
+  font-family: var(--tf-label);
+  font-size: var(--td-small);
+  color: var(--c-accent);
+  cursor: pointer;
+  border: 1px dashed var(--c-accent);
+  border-radius: var(--r-2);
+  padding: 4px 12px;
+}
+.line-empty-add:hover { background: var(--c-accent); color: #fff; }
+.doc__lines .col-no   { width: 56px; color: var(--c-ink-3); text-align: center; }
+.doc__lines .col-qty  { width: 52px; text-align: right; }   /* 4 digit fits */
+.doc__lines .col-unit { width: 72px; text-align: right; }
+.doc__lines .col-price { width: 130px; text-align: right; }
+.doc__lines .col-total { width: 140px; text-align: right; }
+/* Nama Barang column = the remainder (auto-fill). With table-layout:fixed and
+   the other columns pinned, the unnamed column takes all remaining space. */
+
+/* Line hover controls: + (left of number) and × (right). Default hidden;
+   appear on row hover. Click inserts/deletes. */
+.doc__line .col-no { white-space: nowrap; }
+.line-add, .line-del {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  line-height: 12px;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s, background 0.1s, color 0.1s;
+  user-select: none;
+}
+.line-add { color: var(--c-accent); background: var(--c-accent-soft); margin-right: 2px; }
+.line-del { color: var(--tone-danger-fg); background: var(--tone-danger-bg); margin-left: 2px; }
+.line-add:hover { background: var(--c-accent); color: #fff; }
+.line-del:hover { background: var(--tone-danger-fg); color: #fff; }
+.doc__line:hover .line-add,
+.doc__line:hover .line-del { opacity: 1; }
+.line-no {
+  display: inline-block;
+  min-width: 12px;
+}
+/* Make inputs match text-cell right alignment: zero padding on the input,
+   same right padding as the td text. This way "0" in the qty input lines up
+   exactly with the right edge of "100"/"2.945.000.000,00" text in other cells. */
+.doc__lines td.col-qty,
+.doc__lines td.col-price,
+.doc__lines td.col-total,
+.doc__lines td.col-unit {
+  padding-right: var(--s-3);
+  padding-left: 4px;
+}
+.doc__lines td.col-qty input,
+.doc__lines td.col-price input {
+  text-align: right;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1px 0;
+  margin: 0;
+  border-color: transparent;
+  font-family: var(--tf-doc);
+  font-size: var(--td-small);
+}
+.doc__lines td.col-qty input:focus,
+.doc__lines td.col-price input:focus {
+  border-color: var(--c-accent-2);
+}
+.doc__lines td.col-price__val { cursor: text; }
+
+/* Unit select: minimal, matches document font, no border until focus */
+.unit-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1px 2px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-family: var(--tf-doc);
+  font-size: var(--td-small);
+  text-align: right;
+  background: transparent;
+  color: var(--c-ink-2);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.unit-select:hover { border-color: var(--c-line); }
+.unit-select:focus { border-color: var(--c-accent-2); outline: none; }
+
+/* Price input in line items: same styling as qty input */
+.col-price__input {
+  text-align: right;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1px 0;
+  margin: 0;
+  border-color: transparent;
+  font-family: var(--tf-doc);
+  font-size: var(--td-small);
+}
+.col-price__input:focus {
+  border-color: var(--c-accent-2);
+}
+
+/* Numeric fields: no browser spinner, manual entry only. "0" shows as a
+   guide placeholder when empty (neutral gray), used across all modules. */
+.num-field {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.num-field::-webkit-outer-spin-button,
+.num-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.num-field[type="number"] { -moz-appearance: textfield; }
+.num-field::placeholder { color: var(--c-ink-3); opacity: 0.5; font-weight: 400; }
+.num-field.is-disabled,
+.num-field:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: transparent;
+}
+
+/* ── Line hover: subtle price emphasis ──────────────────────── */
+.doc__line:hover .col-price__val { color: var(--c-ink); }
+.doc__lines td.col-price__val { cursor: pointer; }
+
+/* ── Modal overlay ───────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 30, 50, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-5);
+}
+.modal {
+  background: var(--c-surface);
+  border-radius: var(--r-3);
+  box-shadow: 0 20px 60px rgba(20, 30, 50, 0.25);
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  font-family: var(--font-sans);
+}
+.modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--c-line-2);
+}
+.modal__head h3 { font-size: var(--t-md); font-weight: 700; margin: 0; }
+.modal__close {
+  width: 24px; height: 24px;
+  border: none; background: transparent;
+  color: var(--c-ink-3); font-size: 16px; cursor: pointer;
+  border-radius: var(--r-1);
+}
+.modal__close:hover { background: var(--c-surface-3); color: var(--c-ink); }
+.modal__body { padding: var(--s-5); }
+.modal__foot {
+  display: flex; gap: var(--s-2); justify-content: flex-end;
+  padding: var(--s-4) var(--s-5);
+  border-top: 1px solid var(--c-line-2);
+}
+
+/* ── Pricing calculator form ─────────────────────────────────── */
+.pp-context {
+  display: flex; gap: var(--s-5);
+  padding: var(--s-3);
+  background: var(--c-surface-2);
+  border-radius: var(--r-2);
+  margin-bottom: var(--s-4);
+  font-size: var(--t-sm);
+}
+.pp-context span { color: var(--c-ink-3); }
+.pp-field { margin-bottom: var(--s-3); }
+.pp-field label {
+  display: block;
+  font-size: var(--t-xs); font-weight: 600;
+  color: var(--c-ink-3); letter-spacing: 0.02em;
+  margin-bottom: 4px; text-transform: uppercase;
+}
+.pp-field--row { display: flex; align-items: center; gap: var(--s-2); }
+.pp-field--row label { margin-bottom: 0; min-width: 90px; }
+.pp-input {
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  padding: 6px 8px;
+  font-size: var(--t-sm);
+  font-family: var(--font-sans);
+  width: 100%;
+  box-sizing: border-box;
+}
+.pp-select { width: auto; }
+.pp-credit-days { width: 60px; }
+.pp-dropdown {
+  position: absolute; margin-top: 2px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  box-shadow: var(--shadow-paper);
+  max-height: 160px; overflow-y: auto;
+  max-width: 300px; min-width: 200px; z-index: 10;
+}
+/* Supplier field uses the partyPicker-style .pp dropdown inside the modal */
+.pp-field.pp-supplier { position: relative; }
+.pp-field.pp-supplier .pp { min-width: 280px; z-index: 20; }
+.pp-item {
+  display: flex; flex-direction: column;
+  width: 100%; text-align: left;
+  border: none; background: transparent;
+  padding: 6px 8px; cursor: pointer;
+  border-bottom: 1px solid var(--c-line-2);
+  gap: 1px;
+}
+.pp-item:last-child { border-bottom: none; }
+.pp-item:hover { background: var(--c-surface-2); }
+.pp-item span { font-weight: 600; font-size: var(--t-sm); }
+.pp-item small { color: var(--c-ink-3); font-size: var(--t-xs); }
+.pp-divider { border: none; border-top: 1px solid var(--c-line-2); margin: var(--s-4) 0; }
+
+/* Mode toggle (radio group: input per-kg vs per-unit) */
+.pp-mode {
+  display: flex; gap: var(--s-3); margin-bottom: var(--s-3);
+}
+.pp-mode__opt {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--t-sm); color: var(--c-ink-2);
+  padding: 6px 10px; border: 1px solid var(--c-line);
+  border-radius: var(--r-2); cursor: pointer;
+  transition: all 0.12s;
+}
+.pp-mode__opt small { color: var(--c-ink-3); font-size: var(--t-xs); }
+.pp-mode__opt--active {
+  background: var(--c-accent-soft); border-color: var(--c-accent);
+  color: var(--c-accent); font-weight: 600;
+}
+.pp-mode__opt input { accent-color: var(--c-accent); }
+
+/* Readonly derived rows */
+.pp-row--readonly { background: var(--c-surface-2); }
+.pp-readonly {
+  display: block; text-align: right;
+  padding: 6px 8px; font-size: var(--t-sm);
+  color: var(--c-ink-3); font-variant-numeric: tabular-nums;
+}
+.pp-table { width: 100%; border-collapse: collapse; }
+.pp-table th {
+  font-size: var(--t-xs); font-weight: 600; color: var(--c-ink-3);
+  text-transform: uppercase; letter-spacing: 0.02em;
+  padding: var(--s-2); text-align: left;
+  border-bottom: 1px solid var(--c-line);
+}
+.pp-table th:nth-child(2), .pp-table th:nth-child(3) { text-align: left; }
+.pp-table td { padding: 4px var(--s-2); }
+.pp-table tr:not(:last-child) td { border-bottom: 1px solid var(--c-line-2); }
+.pp-label { font-size: var(--t-sm); color: var(--c-ink-2); font-weight: 500; }
+.pp-label small { color: var(--c-ink-3); font-weight: 400; }
+.pp-table .pp-input { text-align: right; }
+.pp-derived { background: var(--c-surface-2); color: var(--c-ink-2); }
+.pp-margin {
+  display: flex; align-items: center; gap: var(--s-2);
+  margin-top: var(--s-4); padding: var(--s-3);
+  background: var(--c-accent-soft);
+  border-radius: var(--r-2);
+  font-size: var(--t-sm);
+}
+.pp-margin b { color: var(--c-accent); font-weight: 700; }
+.doc__line-total { font-weight: 600; }
+
+/* editable inline number input, minimal chrome */
+.doc__lines input[type="number"] {
+  font-family: var(--font-serif);
+  font-size: var(--td-body);
+}
+
+/* ── Totals ──────────────────────────────────────────────────── */
+.doc__totals {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--s-4);
+}
+.doc__totals-table {
+  min-width: 280px;
+  font-size: var(--td-body);
+}
+.doc__totals-table tr td {
+  padding: 3px 0;
+}
+.doc__totals-table .label { color: var(--c-ink-2); padding-right: var(--s-4); }
+.doc__totals-table .val { text-align: right; font-variant-numeric: tabular-nums; }
+.doc__totals-table .grand td {
+  border-top: 1.5px solid var(--c-ink);
+  padding-top: 8px;
+  font-size: var(--td-body);
+  font-weight: var(--tw-bold);
+}
+.doc__totals-table .grand .label { font-weight: var(--tw-bold); color: var(--c-ink); }
+.doc__ppn-note { font-size: var(--td-small); color: var(--c-ink-3); font-style: italic; }
+
+/* ── Terms ───────────────────────────────────────────────────── */
+.doc__terms {
+  margin-bottom: var(--s-4);
+}
+.doc__terms h3 {
+  font-family: var(--tf-label);
+  font-size: var(--td-small);
+  font-weight: var(--tw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ink-3);
+  margin-bottom: var(--s-3);
+}
+.doc__terms ol {
+  list-style: none;
+  counter-reset: term;
+}
+.doc__terms li {
+  counter-increment: term;
+  position: relative;
+  padding-left: 24px;
+  margin-bottom: 6px;
+  font-size: var(--td-small);
+  line-height: 1.55;
+  color: var(--c-ink-2);
+}
+.doc__terms li::before {
+  content: counter(term) ".";
+  position: absolute;
+  left: 0;
+  color: var(--c-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Inline clickable terms (delivery, payment) */
+.delivery-term,
+.payment-term {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--c-ink-3);
+  padding: 0 2px;
+}
+.delivery-term:hover,
+.payment-term:hover {
+  background: var(--c-surface-2);
+  border-bottom-color: var(--c-ink);
+}
+.delivery-dropdown,
+.payment-dropdown {
+  display: inline-flex;
+  flex-direction: column;
+  position: absolute;
+  margin-left: 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  box-shadow: var(--shadow-paper);
+  z-index: 10;
+  min-width: 160px;
+}
+.delivery-dropdown button,
+.payment-dropdown button {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+  border-bottom: 1px solid var(--c-line-2);
+}
+.delivery-dropdown button:last-child,
+.payment-dropdown button:last-child {
+  border-bottom: none;
+  border-radius: 0 0 var(--r-1) var(--r-1);
+}
+.delivery-dropdown button:hover,
+.payment-dropdown button:hover {
+  background: var(--c-surface-2);
+}
+.payment-nett {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--c-line-2);
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+}
+.payment-nett__ref {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-3);
+  margin-bottom: 2px;
+}
+.payment-nett .pfi-beli__label--sm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: var(--td-smaller);
+  color: var(--c-ink-2);
+  padding: 2px 0;
+}
+.payment-nett .pfi-beli__label--sm input[type="radio"] {
+  accent-color: var(--c-accent);
+  margin: 0;
+}
+.payment-nett input {
+  width: 48px;
+  padding: 2px 4px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  font-size: var(--td-small);
+  text-align: right;
+  color: var(--c-ink);
+}
+
+/* ── Payment ref row (Barang sampai / Invoice sampai) ── */
+.payment-ref-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 4px;
+  font-size: var(--td-smaller);
+  color: var(--c-ink-2);
+}
+.payment-ref-row__label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-3);
+}
+.payment-ref-row__opt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.payment-ref-row__opt input[type="radio"] {
+  accent-color: var(--c-accent);
+  margin: 0;
+}
+
+/* "+" and "×" controls on each editable term */
+.term-add,
+.term-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  border: none;
+  background: transparent;
+  color: var(--c-ink-3);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  opacity: 0.4;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.term-add:hover {
+  opacity: 1;
+  color: var(--c-accent, #2d5f7c);
+  background: var(--c-surface-2);
+}
+.term-del:hover {
+  opacity: 1;
+  color: var(--c-danger, #b54545);
+  background: var(--c-surface-2);
+}
+
+/* ── Signature block ───────────────────────────────────────────
+   One or two signatures centered at the bottom. When a marketing
+   staff is selected via the Konfigurasi dropdown, a second column
+   appears next to the primary signatory (Direktur). */
+.doc__signoff {
+  margin-top: var(--s-4);
+  font-size: var(--td-body);
+}
+.doc__signoff p { margin-bottom: var(--s-2); }
+.doc__signatures {
+  display: flex;
+  justify-content: center;
+  gap: var(--s-7);
+  margin-top: var(--s-3);
+}
+.doc__signature {
+  text-align: center;
+  min-width: 140px;
+}
+.doc__signature .sig-box {
+  height: 36px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  margin-bottom: var(--s-1);
+}
+.doc__signature .sig-name { font-weight: 600; }
+.doc__signature .sig-role { font-size: var(--td-body); color: var(--c-ink-2); }
+
+/* Customer acknowledgment card (PFI) — warn-tinted */
+.doc__signature--customer .sig-box { border-color: var(--c-map); border-style: dashed; }
+.doc__signature--customer .sig-name { color: var(--c-map); font-size: var(--td-small); }
+.doc__signature--customer .sig-role { color: var(--c-ink-1); font-weight: 500; }
+
+/* ── Recipient block (bottom of PDF) ─────────────────────────── */
+.doc__recipient {
+  font-size: var(--td-body);
+  color: var(--c-ink);
+  line-height: 1.5;
+}
+.doc__recipient-label { color: var(--c-ink-2); margin-bottom: 2px; }
+.doc__recipient-name { font-weight: 600; }
+.doc__recipient-attn { color: var(--c-ink-2); font-size: var(--td-small); margin-top: 4px; }
+.doc__recipient b { color: var(--c-ink); }
+
+/* ── Top row: recipient (left) + meta (right), side by side ──── */
+.doc__toprow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-6);
+  align-items: start;
+  margin-bottom: var(--s-6);
+}
+.doc__toprow .doc__meta { margin-bottom: 0; }
+
+/* ============================================================================
+   DB-MAP OVERLAY — the X-ray
+   When body has .map-on, every [data-map] field shows an amber annotation.
+   ============================================================================ */
+body.map-on .field {
+  border-color: var(--c-map);
+  background: var(--c-map-soft);
+}
+body.map-on [data-map] { position: relative; }
+
+.db-tag {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--c-map);
+  background: var(--c-map-soft);
+  border: 1px solid var(--c-map);
+  border-radius: var(--r-1);
+  padding: 1px 5px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+body.map-on .db-tag {
+  display: inline-block;
+  position: absolute;
+  top: -9px;
+  left: 4px;
+  z-index: 2;
+}
+.db-tag--block {
+  position: static;
+  margin-bottom: var(--s-2);
+  align-self: flex-start;
+}
+
+/* table column tags sit above the th */
+body.map-on .doc__lines th { position: relative; padding-top: 18px; }
+
+/* wrap regions so tags anchor nicely */
+.region { position: relative; }
+
+/* Stub partials */
+.stub {
+  text-align: center;
+  padding: var(--s-7) var(--s-5);
+  color: var(--c-ink-3);
+}
+.stub__icon {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  opacity: 0.3;
+  margin-bottom: var(--s-3);
+}
+.stub__title { font-size: var(--t-md); font-weight: 600; color: var(--c-ink-2); margin-bottom: var(--s-2); }
+.stub__hint { font-size: var(--t-sm); }
+
+@media (max-width: 880px) {
+  .page { padding: 32px 24px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SO FORM LAYOUT (Sales Order — internal document, form-like)
+   ═══════════════════════════════════════════════════════════════════ */
+.so-form {
+  margin-top: var(--s-4);
+}
+
+.so-form__row {
+  display: flex;
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+}
+
+.so-form__row--2col > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Field section (card-like region) ── */
+.so-field {
+  position: relative;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: var(--s-3) var(--s-3);
+  background: var(--c-surface);
+}
+
+.so-field__label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-3);
+  margin-bottom: var(--s-2);
+}
+
+.so-field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
+}
+
+.so-field__row:last-child {
+  margin-bottom: 0;
+}
+
+.so-field__row--dim {
+  font-size: var(--td-small);
+  color: var(--c-ink-3);
+}
+
+.so-field__stamp {
+  color: var(--c-ink-2);
+}
+
+.so-field__hint {
+  color: var(--c-ink-3);
+  margin-bottom: var(--s-1);
+}
+
+/* ── Hubungkan Dokumen link row ── */
+.so-link-row {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+.so-link-row__item {
+  flex: 1;
+  min-width: 0;
+}
+
+.so-link-row__item--wide {
+  flex: 2;
+}
+
+.so-link-row__tag {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-ink-3);
+  margin-bottom: 3px;
+}
+
+.so-link-row__input {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.so-link-select {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: var(--td-small);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  background: var(--c-bg);
+  color: var(--c-ink-1);
+}
+
+/* ── Upload PO ── */
+.so-upload {
+  display: flex;
+  align-items: center;
+}
+
+.so-upload__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: var(--td-small);
+  color: var(--c-accent);
+  padding: 4px 10px;
+  border: 1px dashed var(--c-accent);
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.so-upload__btn:hover {
+  background: var(--c-accent-soft);
+}
+
+.so-upload__file {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--td-small);
+}
+
+.so-upload__name {
+  color: var(--c-ink-1);
+  font-weight: 500;
+}
+
+.so-upload__ganti {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--c-accent);
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.so-upload__ganti:hover {
+  background: var(--c-accent);
+  color: white;
+}
+
+/* ── Shipping Terms radio group ── */
+.so-terms-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-1);
+}
+
+.so-term-radio {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--td-small);
+  cursor: pointer;
+  padding: 3px 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.so-term-radio:has(input:checked) {
+  background: var(--c-accent-soft);
+  border-color: var(--c-accent);
+}
+
+.so-term-radio input[type="radio"] {
+  accent-color: var(--c-accent);
+  margin: 0;
+}
+
+/* ── Opsi panel: Hubungkan Dokumen (SO only) ── */
+.so-ops-link-input {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 8px;
+  font-size: var(--td-small);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  background: var(--c-bg);
+  color: var(--c-ink-1);
+}
+
+.so-ops-link-input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+}
+
+.so-ops-upload {
+  display: flex;
+  align-items: center;
+}
+
+.so-ops-upload__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: var(--td-small);
+  color: var(--c-accent);
+  padding: 3px 8px;
+  border: 1px dashed var(--c-accent);
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.so-ops-upload__btn:hover {
+  background: var(--c-accent-soft);
+}
+
+.so-ops-upload__file {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--td-small);
+}
+
+.so-ops-upload__name {
+  color: var(--c-ink-1);
+  font-weight: 500;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.so-ops-upload__ganti {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--c-accent);
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.so-ops-upload__ganti:hover {
+  background: var(--c-accent);
+  color: white;
+}
+
+.so-ops-info {
+  font-size: var(--td-small);
+  font-weight: 600;
+  color: var(--c-ink-1);
+  padding: 3px 0;
+}
+
+/* ── PO supplier checklist (Opsi panel) ── */
+.po-supplier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.po-supplier-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--td-small);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--r-1);
+  transition: background 0.15s;
+}
+
+.po-supplier-check:hover {
+  background: var(--c-surface-2);
+}
+
+.po-supplier-check input[type="checkbox"] {
+  accent-color: var(--c-accent);
+  margin: 0;
+}
+
+.po-supplier-check small {
+  color: var(--c-ink-3);
+  margin-left: auto;
+}
+
+/* ── Opsi panel action button ── */
+.cfg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+  width: 100%;
+  margin-top: var(--s-2);
+  padding: 6px 12px;
+  font-size: var(--td-small);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--r-1);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cfg-btn--primary {
+  background: var(--c-accent);
+  color: #fff;
+}
+
+.cfg-btn--primary:hover {
+  background: var(--c-accent-2);
+}
+
+/* ============================================================================
+   PFI BELI — form internal (Proforma Invoice purchase-side)
+   ============================================================================ */
+
+.pfi-beli__section {
+  margin-top: var(--s-5);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--c-line-2);
+}
+
+.pfi-beli__heading {
+  font-family: var(--font-display);
+  font-size: var(--td-base);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-ink);
+  margin: 0 0 var(--s-3);
+  padding-bottom: var(--s-1);
+  border-bottom: 1px solid var(--c-line);
+}
+
+/* ── Grid layouts ── */
+.pfi-beli__grid {
+  display: grid;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.pfi-beli__grid--2col { grid-template-columns: 1fr 1fr; }
+.pfi-beli__grid--3col { grid-template-columns: 1fr 1fr 1fr; }
+
+/* ── Field wrapper ── */
+.pfi-beli__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pfi-beli__field--sm { gap: 2px; }
+
+.pfi-beli__label {
+  font-size: var(--td-small);
+  font-weight: 600;
+  color: var(--c-ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.pfi-beli__label--sm {
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.pfi-beli__readonly {
+  font-size: var(--td-base);
+  color: var(--c-ink);
+  padding: 4px 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* ── File upload ── */
+.pfi-beli__upload {
+  margin-top: var(--s-2);
+}
+
+.pfi-beli__file-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.pfi-beli__file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  font-size: var(--td-small);
+  font-weight: 500;
+  color: var(--c-accent);
+  border: 1px dashed var(--c-accent);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pfi-beli__file-btn:hover {
+  background: color-mix(in srgb, var(--c-accent) 8%, transparent);
+}
+
+.pfi-beli__file-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--td-small);
+  padding: 4px 10px;
+  background: var(--c-bg-2);
+  border-radius: var(--r-1);
+}
+
+.pfi-beli__file-clear {
+  background: none;
+  border: none;
+  color: var(--c-ink-3);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.pfi-beli__file-clear:hover { color: var(--c-danger); }
+
+/* ── Approval cards ── */
+.pfi-beli__approval-card {
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-2);
+  overflow: hidden;
+}
+
+.pfi-beli__approval-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--c-bg-2);
+  border-bottom: 1px solid var(--c-line);
+}
+
+.pfi-beli__approval-title {
+  font-size: var(--td-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--c-ink);
+}
+
+.pfi-beli__approval-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+}
+.pfi-beli__approval-badge--pending {
+  background: var(--c-bg-2);
+  color: var(--c-ink-3);
+  border: 1px solid var(--c-line);
+}
+.pfi-beli__approval-badge--approved {
+  background: color-mix(in srgb, var(--c-success, #16a34a) 12%, transparent);
+  color: var(--c-success, #16a34a);
+  border: 1px solid var(--c-success, #16a34a);
+}
+.pfi-beli__approval-badge--rejected {
+  background: color-mix(in srgb, var(--c-danger) 12%, transparent);
+  color: var(--c-danger);
+  border: 1px solid var(--c-danger);
+}
+
+.pfi-beli__approval-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pfi-beli__approval-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pfi-beli__btn-approve,
+.pfi-beli__btn-reject,
+.pfi-beli__btn-reset {
+  font-size: var(--td-smaller);
+  font-weight: 600;
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--r-1);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pfi-beli__btn-approve {
+  background: color-mix(in srgb, var(--c-success, #16a34a) 90%, #000);
+  color: #fff;
+}
+.pfi-beli__btn-approve:hover { background: var(--c-success, #16a34a); }
+.pfi-beli__btn-reject {
+  background: transparent;
+  color: var(--c-danger);
+  border: 1px solid var(--c-danger);
+}
+.pfi-beli__btn-reject:hover { background: color-mix(in srgb, var(--c-danger) 10%, transparent); }
+.pfi-beli__btn-reset {
+  background: transparent;
+  color: var(--c-ink-3);
+  border: 1px solid var(--c-line);
+  align-self: flex-start;
+}
+.pfi-beli__btn-reset:hover { background: var(--c-bg-2); }
+
+/* ── Compact approval fields (inside card) ── */
+.pfi-beli__approval-body .pfi-beli__field--sm .field {
+  font-size: var(--td-small);
+}
+
+/* ── Upload preview (shared across BELI + Opsi panel) ── */
+.pfi-beli__file-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--c-bg-2);
+  border-radius: var(--r-1);
+  border: 1px solid var(--c-line);
+}
+
+.pfi-beli__file-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--c-line);
+  flex-shrink: 0;
+}
+
+.pfi-beli__file-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.pfi-beli__file-replace {
+  background: none;
+  border: none;
+  color: var(--c-accent);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+.pfi-beli__file-replace:hover { background: color-mix(in srgb, var(--c-accent) 12%, transparent); }
+
+.pfi-beli__file-log {
+  margin-top: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--c-ink-3);
+  background: var(--c-bg-1);
+  border-radius: var(--r-1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pfi-beli__file-log small {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+
+.pfi-beli__file-log-item {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--c-bg-2);
+  border-radius: 3px;
+  font-family: var(--font-mono, monospace);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SURAT JALAN — A5 format (148mm × 210mm)
+   ══════════════════════════════════════════════════════════════════════ */
+
+.sj-page {
+  max-width: 148mm;
+  margin: 16px auto;
+  padding: 12mm 10mm;
+  background: #fff;
+  font-size: 10pt;
+  line-height: 1.35;
+  color: #111;
+  border: 1px solid var(--c-line, #ddd);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+/* ── Header ── */
+.sj-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #111;
+  margin-bottom: 10px;
+}
+.sj-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.sj-company {
+  font-size: 11pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Title + No ── */
+.sj-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.sj-title {
+  font-size: 14pt;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sj-docno {
+  font-family: var(--font-mono, monospace);
+  font-size: 9pt;
+  color: #555;
+}
+.sj-docno-label { margin-right: 4px; font-weight: 600; }
+
+/* ── Meta: customer + date ── */
+.sj-meta {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+.sj-meta__row {
+  margin-bottom: 4px;
+}
+.sj-meta__row:last-child { margin-bottom: 0; }
+.sj-meta__label {
+  font-weight: 700;
+  font-size: 9pt;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.sj-meta__value { font-size: 10pt; }
+.sj-party-name { font-size: 11pt; font-weight: 700; margin-top: 2px; }
+.sj-party-addr { font-size: 9pt; color: #555; }
+.sj-party-pic { font-size: 9pt; color: #555; margin-top: 2px; }
+.sj-meta__row--party .party-search {
+  font-size: 10pt;
+  width: 100%;
+  padding: 3px 6px;
+  border: 1px dashed #aaa;
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+
+/* ── Pengiriman Detail ── */
+.sj-ship {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+.sj-ship__title {
+  font-weight: 800;
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  color: #333;
+}
+.sj-ship__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+.sj-ship__field {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.sj-ship__field--full { grid-column: 1 / -1; }
+.sj-ship__label {
+  font-size: 8pt;
+  font-weight: 600;
+  color: #777;
+  white-space: nowrap;
+  min-width: 90px;
+  text-transform: uppercase;
+}
+.sj-ship__field .field {
+  font-size: 10pt;
+  border-bottom: 1px dotted #ccc;
+  min-width: 60px;
+  flex: 1;
+}
+
+/* ── Lines table ── */
+.sj-lines {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+  font-size: 9.5pt;
+}
+.sj-lines th {
+  background: #f4f4f4;
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 5px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+.sj-lines td {
+  padding: 3px 5px;
+  border: 1px solid #ddd;
+  vertical-align: top;
+}
+.sj-lines__no    { width: 28px; text-align: center; }
+.sj-lines__desc  { }
+.sj-lines__qty   { width: 44px; text-align: center; }
+.sj-lines__unit  { width: 54px; text-align: center; }
+.sj-lines__note  { width: 74px; }
+
+/* ── Empty ── */
+.sj-empty {
+  text-align: center;
+  padding: 24px 0;
+  color: #999;
+  font-size: 10pt;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+.sj-empty__icon { font-size: 24px; margin-bottom: 4px; }
+
+/* ── Signatures ── */
+.sj-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 20px;
+}
+.sj-sig {
+  text-align: center;
+}
+.sj-sig__label {
+  font-size: 9pt;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+.sj-sig__company {
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+  color: #333;
+}
+.sj-sig__box {
+  width: 100%;
+  height: 48px;
+  margin: 0 auto 4px;
+}
+.sj-sig__name {
+  font-size: 8.5pt;
+  color: #555;
+}
+
+/* ── Opsi panel — Hubungkan Dokumen for delivery ── */
+.delivery-ops__method {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.delivery-ops__method button {
+  padding: 3px 10px;
+  font-size: 11px;
+  border: 1px solid var(--c-line);
+  border-radius: 4px;
+  background: var(--c-bg-1);
+  cursor: pointer;
+}
+.delivery-ops__method button.active {
+  background: var(--c-accent);
+  color: #fff;
+  border-color: var(--c-accent);
+}
+
+/* ── SIGNATURE master data table ────────────────────────────── */
+.sig-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--td-body);
+}
+.sig-table thead th {
+  text-align: left;
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+  font-weight: 500;
+  border-bottom: 1px solid var(--c-line);
+}
+.sig-table__status { width: 36px; text-align: center; }
+.sig-table__actions { width: 100px; text-align: right; }
+
+.sig-row td {
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--c-bg-2);
+  vertical-align: middle;
+}
+.sig-row:hover { background: var(--c-bg-2); }
+.sig-row--inactive { opacity: 0.45; }
+
+.sig-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.sig-dot--active { background: var(--c-green, #16a34a); }
+.sig-dot--inactive { background: var(--c-ink-3); }
+
+.sig-row__name { font-weight: 500; }
+.sig-row__role { color: var(--c-ink-2); font-size: var(--td-small); }
+
+.sig-row__img-wrap { display: inline-flex; align-items: center; }
+.sig-row__img {
+  height: 36px;
+  max-width: 120px;
+  object-fit: contain;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  background: #fff;
+}
+.sig-row__noimg { color: var(--c-ink-3); font-size: var(--td-small); }
+.sig-row__empty { padding: var(--s-6); text-align: center; color: var(--c-ink-3); }
+
+/* Modal form */
+.modal--sig { max-width: 440px; }
+.sig-form__field {
+  display: block;
+  margin-bottom: var(--s-3);
+}
+.sig-form__field span {
+  display: block;
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+  margin-bottom: var(--s-1);
+}
+.sig-form__field .field { width: 100%; }
+.sig-form__upload { margin-top: var(--s-1); }
+.sig-form__preview { display: flex; align-items: center; gap: var(--s-2); }
+.sig-form__thumb {
+  height: 48px;
+  max-width: 160px;
+  object-fit: contain;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  background: #fff;
+}

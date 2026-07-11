@@ -1,0 +1,143 @@
+<!--
+  PARTIAL BODY: pickup.html
+  ----------------------------------------------------------------------------
+  Pickup Memo — BELI direction. Dokumen pengambilan barang dari supplier.
+-->
+<article class="page" x-data="docBody($store.doc.currentId)">
+  <header class="doc__head">
+      <div class="doc__head-left region" data-map="comp_logo">
+        <span class="db-tag">comp_logo · companies</span>
+        <img class="doc__logo" src="/logo.jpg" alt="Logo PT Rembulan Aurora Indonesia" />
+        <div class="doc__issuer">
+          <div class="doc__issuer-name" x-text="company?.name"></div>
+          <div class="field-row">
+            <span class="field field--multiline"
+                  contenteditable="true"
+                  data-field="address"
+                  x-effect="editing.address ? null : ($el.innerText = companyDraft?.address || '')"
+                  @focus="startEdit('address')"
+                  @input="companyDraft.address = $event.target.innerText"
+                  @blur="cancelEdit('address')"></span>
+            <button x-show="editing.address" x-cloak class="default-pill"
+                    @mousedown.prevent="commitDefault('address')" x-transition>↺</button>
+          </div>
+          <div class="doc__contact-row">
+            <div class="field-row field-row--inline">
+              <span class="field-label">Tel:</span>
+              <span class="field" contenteditable="true" data-field="phone"
+                    x-effect="editing.phone ? null : ($el.innerText = companyDraft?.phone || '')"
+                    @focus="startEdit('phone')"
+                    @input="companyDraft.phone = $event.target.innerText"
+                    @blur="cancelEdit('phone')"></span>
+              <button x-show="editing.phone" x-cloak class="default-pill"
+                      @mousedown.prevent="commitDefault('phone')" x-transition>↺</button>
+            </div>
+            <div class="field-row field-row--inline">
+              <span class="field-label">Email:</span>
+              <span class="field" contenteditable="true" data-field="email"
+                    x-effect="editing.email ? null : ($el.innerText = companyDraft?.email || '')"
+                    @focus="startEdit('email')"
+                    @input="companyDraft.email = $event.target.innerText"
+                    @blur="cancelEdit('email')"></span>
+              <button x-show="editing.email" x-cloak class="default-pill"
+                      @mousedown.prevent="commitDefault('email')" x-transition>↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="doc__head-right region" data-map="documents">
+        <span class="db-tag">documents</span>
+        <div class="doc__title">
+          <span x-text="$store.doc.docTitle"></span>
+          <small>
+            <span x-text="doc.doc_no"></span><template x-if="$store.doc.revisionCount > 0"><span x-text="' r' + $store.doc.revisionCount"></span></template>
+          </small>
+        </div>
+      </div>
+    </header>
+
+  <div class="doc__toprow">
+    <section class="doc__recipient region" data-map="parties" x-data="partyPicker(party)">
+      <span class="db-tag">parties</span>
+      <div class="doc__recipient-label">Dari,</div>
+      <div class="party-input-wrap">
+        <input class="field party-search" type="text" x-model="query"
+               placeholder="Pilih supplier..."
+               @focus="focusField()" @input="buildResults()" @blur="close()" />
+        <div class="pp" x-show="open && !showQuickAdd" x-transition @mousedown.prevent="" x-cloak>
+          <template x-for="r in results" :key="r.id">
+            <button class="pp__item" @mousedown.prevent="pick(r.id)">
+              <span class="pp__name" x-text="r.name"></span>
+              <span class="pp__sub" x-text="r.contact_person"></span>
+            </button>
+          </template>
+          <button class="pp__quickadd" @mousedown.prevent="openQuickAdd()">+ Quick Add</button>
+        </div>
+      </div>
+      <div class="party-address field" x-text="party?.address"></div>
+      <div class="party-pic-row">
+        <span class="party-pic-label">Up:</span>
+        <span class="field" x-text="party?.contact_person"></span>
+        <span class="field party-pic-phone" x-text="party?.contact_phone"></span>
+      </div>
+    </section>
+
+    <section class="doc__meta region" data-map="documents">
+      <span class="db-tag">documents</span>
+      <div class="doc__meta-row" x-data="datePicker(doc.date)" @set-date="setDate($event.detail)">
+        <span class="doc__meta-label">Tanggal Pickup</span>
+        <span class="field date-field" @click="toggle()" x-text="fmtDate(selected)"></span>
+      </div>
+      <template x-if="doc?.shipping_terms !== 'Locco'">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Alamat Jemput</span>
+          <span class="field field--multiline"
+                contenteditable="true"
+                data-field="ship-addr"
+                x-effect="editing['ship-addr'] ? null : ($el.innerText = doc?.shipping_address || '')"
+                @focus="startEdit('ship-addr')"
+                @input="doc.shipping_address = $event.target.innerText"
+                @blur="cancelEdit('ship-addr')"></span>
+        </div>
+      </template>
+      <template x-if="doc?.shipping_terms === 'Locco'">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Alamat Penjemputan</span>
+          <span class="field field--multiline"
+                contenteditable="true"
+                data-field="pickup-addr"
+                x-effect="editing['pickup-addr'] ? null : ($el.innerText = doc?.pickup_address || '')"
+                @focus="startEdit('pickup-addr')"
+                @input="doc.pickup_address = $event.target.innerText"
+                @blur="cancelEdit('pickup-addr')"></span>
+        </div>
+      </template>
+    </section>
+  </div>
+
+  <div class="doc__empty-hint region" data-map="document_lines">
+    <span class="db-tag">document_lines</span>
+    <div class="doc__empty-icon">▦</div>
+    <div class="doc__empty-text">
+      Pickup Memo ini belum memiliki item.<br />
+      <small>Daftar barang yang akan diambil dari supplier.
+      Klik <b>+ Tambah</b> di header untuk input item.</small>
+    </div>
+  </div>
+
+  <div class="doc__signatures">
+    <div class="doc__signature region" data-map="signatories" x-data="{ sig: $store.signatures.byRole('Logistik') }">
+      <span class="db-tag">signatories</span>
+      <p>Diterima oleh,</p>
+      <div class="sig-box"></div>
+      <div class="sig-name field" x-text="sig?.name"></div>
+      <div class="sig-role" x-text="sig?.role"></div>
+    </div>
+    <div class="doc__signature region" data-map="signatories">
+      <span class="db-tag">signatories</span>
+      <p>Supplier,</p>
+      <div class="sig-box"></div>
+      <div class="sig-name field" x-text="party?.name || '(Supplier)'"></div>
+    </div>
+  </div>
+</article>

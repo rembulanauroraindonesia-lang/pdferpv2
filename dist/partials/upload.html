@@ -1,0 +1,55 @@
+<!--
+  PARTIAL: upload.html  (loaded by htmx into #doc-body)
+  Master Data UPLOAD — library of all uploaded files across documents.
+  Uses $store.doc to scan documents for file fields.
+-->
+<div class="upload-library" x-data="uploadLibrary()">
+
+  <!-- Header -->
+  <div class="upload-library__header">
+    <div>
+      <h1 class="upload-library__title">UPLOAD</h1>
+      <span class="upload-library__count" x-text="'Total ' + files.length + ' file'"></span>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <template x-if="files.length === 0">
+    <div class="upload-library__empty">
+      <div class="upload-library__empty-icon">📂</div>
+      <p class="upload-library__empty-text">Belum ada file yang di-upload.</p>
+    </div>
+  </template>
+
+  <!-- File table -->
+  <template x-if="files.length > 0">
+    <div class="upload-library__table-wrap">
+      <table class="upload-library__table">
+        <thead>
+          <tr>
+            <th>Nama File</th>
+            <th>Tipe</th>
+            <th>Module</th>
+            <th>No. Dokumen</th>
+            <th>Field</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="f in files" :key="f.id">
+            <tr>
+              <td>
+                <span class="upload-library__file-icon" x-text="f.icon"></span>
+                <span class="upload-library__filename" x-text="f.filename"></span>
+              </td>
+              <td><span class="upload-library__badge" x-text="f.ext"></span></td>
+              <td x-text="f.module"></td>
+              <td x-text="f.docNo"></td>
+              <td x-text="f.fieldLabel"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+</div>

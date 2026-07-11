@@ -1,0 +1,803 @@
+<!--
+  PARTIAL BODY: proforma-invoice.html  (swapped into #doc-body by htmx)
+  ----------------------------------------------------------------------------
+  JUAL: letter-style billing to customer (existing).
+  BELI: form internal — supplier PFI upload, payment request, approval, evidence.
+  Direction from $store.doc.direction.
+-->
+<div class="doc-body-wrap" x-data="docBody($store.doc.currentId)">
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!--  JUAL — letter-style billing to customer                             -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<template x-if="$store.doc.direction === 'jual'">
+<div>
+<template x-for="(pageLines, pageIdx) in pagedLines" :key="pageIdx">
+<article class="page" :class="{ 'page--locked': $store.doc.isLocked }">
+
+  <header class="doc__head">
+      <div class="doc__head-left region" data-map="comp_logo">
+        <span class="db-tag">comp_logo · companies</span>
+        <img class="doc__logo" src="/logo.jpg" alt="Logo PT Rembulan Aurora Indonesia" />
+        <div class="doc__issuer">
+          <div class="doc__issuer-name" x-text="company?.name"></div>
+          <div class="field-row">
+            <span class="field field--multiline"
+                  contenteditable="true"
+                  data-field="address"
+                  x-effect="editing.address ? null : ($el.innerText = companyDraft?.address || '')"
+                  @focus="startEdit('address')"
+                  @input="companyDraft.address = $event.target.innerText"
+                  @blur="cancelEdit('address')"></span>
+            <button x-show="editing.address" x-cloak class="default-pill"
+                    @mousedown.prevent="commitDefault('address')" x-transition>↺</button>
+          </div>
+          <div class="doc__contact-row">
+            <div class="field-row field-row--inline">
+              <span class="field-label">Tel:</span>
+              <span class="field" contenteditable="true" data-field="phone"
+                    x-effect="editing.phone ? null : ($el.innerText = companyDraft?.phone || '')"
+                    @focus="startEdit('phone')"
+                    @input="companyDraft.phone = $event.target.innerText"
+                    @blur="cancelEdit('phone')"></span>
+              <button x-show="editing.phone" x-cloak class="default-pill"
+                      @mousedown.prevent="commitDefault('phone')" x-transition>↺</button>
+            </div>
+            <div class="field-row field-row--inline">
+              <span class="field-label">Email:</span>
+              <span class="field" contenteditable="true" data-field="email"
+                    x-effect="editing.email ? null : ($el.innerText = companyDraft?.email || '')"
+                    @focus="startEdit('email')"
+                    @input="companyDraft.email = $event.target.innerText"
+                    @blur="cancelEdit('email')"></span>
+              <button x-show="editing.email" x-cloak class="default-pill"
+                      @mousedown.prevent="commitDefault('email')" x-transition>↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="doc__head-right region" data-map="documents">
+        <span class="db-tag">documents</span>
+        <div class="doc__title">
+          <span x-text="$store.doc.docTitle"></span>
+          <small>
+            <span x-text="doc.doc_no"></span><template x-if="$store.doc.docTitleSub"><span x-text="' · ' + $store.doc.docTitleSub"></span></template><template x-if="$store.doc.revisionCount > 0"><span x-text="' r' + $store.doc.revisionCount"></span></template>
+          </small>
+        </div>
+      </div>
+    </header>
+
+  <div class="doc__toprow">
+    <section class="doc__recipient region" data-map="parties"
+             x-data="partyPicker(party)" @pick-party="setParty($event.detail)">
+      <span class="db-tag">parties</span>
+      <div class="doc__recipient-label" x-text="$store.doc.direction === 'jual' ? 'Kepada Yth,' : 'Kepada Yth. Supplier,'"></div>
+      <div class="party-input-wrap">
+        <input class="field party-search" type="text"
+               data-field="party-name"
+               x-model="query"
+               :placeholder="$store.doc.direction === 'jual' ? 'Pilih customer...' : 'Pilih supplier...'"
+               @focus="focusField()"
+               @input="buildResults()"
+               @blur="close()" />
+        <div class="pp" x-show="open && !showQuickAdd" x-transition @mousedown.prevent="" x-cloak>
+          <template x-for="r in results" :key="r.id">
+            <button class="pp__item" @mousedown.prevent="pick(r.id)">
+              <span class="pp__name" x-text="r.name"></span>
+              <span class="pp__sub" x-text="r.contact_person + (r.contact_phone ? ' · ' + r.contact_phone : '')"></span>
+            </button>
+          </template>
+          <template x-if="results.length === 0">
+            <div class="pp__empty">Tidak ada hasil untuk "<span x-text="query"></span>"</div>
+          </template>
+          <button class="pp__quickadd" @mousedown.prevent="openQuickAdd()">+ Quick Add</button>
+        </div>
+        <div class="pp qa" x-show="showQuickAdd" x-transition x-cloak>
+          <div class="qa__title">Tambah Kontak Baru</div>
+          <label class="qa__field"><span>Nama Perusahaan</span>
+            <input type="text" x-model="qaName" @keydown.enter="saveQuickAdd()" /></label>
+          <label class="qa__field"><span>Alamat Kantor</span>
+            <input type="text" x-model="qaAddress" /></label>
+          <label class="qa__field"><span>Nama PIC</span>
+            <input type="text" x-model="qaContact" /></label>
+          <label class="qa__field"><span>No. Kontak PIC</span>
+            <input type="text" x-model="qaPhone" /></label>
+          <div class="qa__actions">
+            <button class="qa__btn qa__btn--ghost" @mousedown.prevent="showQuickAdd = false">Batal</button>
+            <button class="qa__btn qa__btn--primary" @mousedown.prevent="saveQuickAdd()">Simpan</button>
+          </div>
+        </div>
+      </div>
+      <div class="party-address field" data-field="party-address" x-text="party?.address"></div>
+      <div class="party-pic-row">
+        <span class="party-pic-label">Up:</span>
+        <span class="field" data-field="party-contact" x-text="party?.contact_person"></span>
+        <span class="field party-pic-phone" data-field="party-phone" x-text="party?.contact_phone"></span>
+      </div>
+    </section>
+
+    <section class="doc__meta region" data-map="documents">
+      <span class="db-tag">documents</span>
+      <div class="doc__meta-row" x-data="datePicker(doc.date)" @set-date="setDate($event.detail)">
+        <span class="doc__meta-label">Tanggal</span>
+        <span class="field date-field" @click="toggle()" x-text="fmtDate(selected)"></span>
+        <div class="cal" x-show="open" x-transition @click.outside="open=false" x-cloak>
+          <div class="cal__head">
+            <button class="cal__nav" @click="prevMonth()" aria-label="Bulan sebelumnya">‹</button>
+            <span class="cal__title" x-text="monthLabel()"></span>
+            <button class="cal__nav" @click="nextMonth()" aria-label="Bulan berikutnya">›</button>
+          </div>
+          <div class="cal__weekdays">
+            <template x-for="w in weekDays" :key="w"><span x-text="w"></span></template>
+          </div>
+          <div class="cal__grid">
+            <template x-for="d in days" :key="d.iso">
+              <button class="cal__day"
+                      :class="{ 'cal__day--out': !d.inMonth, 'cal__day--today': d.isToday, 'cal__day--sel': d.isSelected }"
+                      @click="pick(d.iso)" x-text="d.day"></button>
+            </template>
+          </div>
+          <button class="cal__today" @click="pickToday()">Hari ini</button>
+        </div>
+      </div>
+      <template x-if="doc?.shipping_terms !== 'Locco'">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Alamat Kirim</span>
+          <span class="field field--multiline"
+                contenteditable="true"
+                data-field="ship-addr"
+                x-effect="editing['ship-addr'] ? null : ($el.innerText = doc?.shipping_address || '')"
+                @focus="startEdit('ship-addr')"
+                @input="doc.shipping_address = $event.target.innerText"
+                @blur="cancelEdit('ship-addr')"></span>
+        </div>
+      </template>
+      <template x-if="doc?.shipping_terms === 'Locco'">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Alamat Jemput</span>
+          <span class="field field--multiline"
+                contenteditable="true"
+                data-field="pickup-addr"
+                x-effect="editing['pickup-addr'] ? null : ($el.innerText = doc?.pickup_address || '')"
+                @focus="startEdit('pickup-addr')"
+                @input="doc.pickup_address = $event.target.innerText"
+                @blur="cancelEdit('pickup-addr')"></span>
+        </div>
+      </template>
+      <template x-if="$store.doc.linkSalesOrderId">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Dari</span>
+          <span class="field" x-text="$store.doc.linkSoRef"></span>
+        </div>
+      </template>
+      <template x-if="$store.doc.linkSalesOrderId && doc.due_date">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Jatuh Tempo</span>
+          <span class="field" x-text="fmtDate(doc.due_date)"></span>
+        </div>
+      </template>
+      <template x-if="$store.doc.linkSalesOrderId && $store.doc.linkPaymentTerms">
+        <div class="doc__meta-row">
+          <span class="doc__meta-label">Syarat Bayar</span>
+          <span class="field" x-text="$store.doc.linkPaymentTerms"></span>
+        </div>
+      </template>
+      <template x-if="doc.saved_at">
+        <div class="doc__meta-row doc__meta-row--lifecycle">
+          <span class="doc__meta-label">Disimpan</span>
+          <span class="doc__meta-stamp" x-text="fmtStamp(doc.saved_at)"></span>
+        </div>
+      </template>
+      <template x-if="doc.last_revision_at">
+        <div class="doc__meta-row doc__meta-row--lifecycle">
+          <span class="doc__meta-label">Revisi ke-<span x-text="$store.doc.revisionCount"></span></span>
+          <span class="doc__meta-stamp" x-text="fmtStamp(doc.last_revision_at)"></span>
+        </div>
+      </template>
+    </section>
+  </div>
+
+  <div class="doc__salutation field-row">
+    <span class="field field--multiline"
+          contenteditable="true"
+          data-field="salutation"
+          x-effect="editing.salutation ? null : ($el.innerText = doc?.salutation || '')"
+          @focus="startEdit('salutation')"
+          @input="doc.salutation = $event.target.innerText"
+          @blur="cancelEdit('salutation')"></span>
+    <button x-show="editing.salutation" x-cloak
+            class="default-pill"
+            @mousedown.prevent="commitDefault('salutation')"
+            x-transition>↺ Jadikan default</button>
+  </div>
+
+  <section class="region" data-map="document_lines">
+    <span class="db-tag">document_lines</span>
+    <table class="doc__lines">
+      <thead>
+        <tr>
+          <th class="col-no">No</th>
+          <th>Nama Barang</th>
+          <th class="col-qty">Qty</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-price">Harga Satuan</th>
+          <th class="col-total">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(line, idx) in pageLines" :key="line.id">
+          <tr class="doc__line">
+            <td class="col-no">
+              <span class="line-add" @click="addLine((pageIdx * LINES_PER_PAGE) + idx + 1)" title="Tambah baris di bawah">+</span>
+              <span class="line-no" x-text="(pageIdx * LINES_PER_PAGE) + idx + 1"></span>
+              <span class="line-del"
+                    @click="removeLine((pageIdx * LINES_PER_PAGE) + idx)" title="Hapus baris">×</span>
+            </td>
+            <td>
+              <span class="field" contenteditable="true"
+                    x-init="$el.innerText = line.item_name || ''"
+                    @input="line.item_name = $event.target.innerText"
+                    @focus="$el.select?.()"></span>
+            </td>
+            <td class="col-qty">
+              <input class="field num-field" type="text" inputmode="numeric"
+                     placeholder="0"
+                     :value="$intFmt(line.qty)"
+                     @input="line.qty = $intParse($event.target.value); $store.doc.touch()"
+                     @focus="$el.value = $intParse($el.value) || ''; $el.select()" />
+            </td>
+            <td class="col-unit">
+              <select class="field unit-select"
+                      x-model="line.unit">
+                <option value="Pcs">Pcs</option>
+                <option value="Kg">Kg</option>
+                <option value="Meter">Meter</option>
+                <option value="Roll">Roll</option>
+                <option value="Set">Set</option>
+                <option value="Lot">Lot</option>
+                <option value="Lembar">Lembar</option>
+                <option value="Batang">Batang</option>
+                <option value="Unit">Unit</option>
+              </select>
+            </td>
+            <td class="col-price">
+              <span class="field col-price__val" x-text="money(displayPrice(line))"></span>
+            </td>
+            <td class="col-total doc__line-total" x-text="money(displayTotal(line))"></td>
+          </tr>
+        </template>
+        <template x-if="pageLines.length === 0">
+          <tr class="doc__line-empty">
+            <td colspan="6">
+              <span class="line-empty-add" @click="addLine(0)">+ Tambah item pertama</span>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </section>
+
+  <template x-if="pageIdx === pageCount - 1">
+    <div>
+      <section class="doc__totals region" data-map="(derived via calc.ts)">
+        <span class="db-tag">derived · calc.ts</span>
+        <table class="doc__totals-table">
+          <tr>
+            <td class="label">Subtotal</td>
+            <td class="val" x-text="money(totals.subtotal)"></td>
+          </tr>
+          <tr>
+            <td class="label">Ongkos Kirim</td>
+            <td class="val">
+              <input class="field num-field" type="text" inputmode="numeric"
+                     placeholder="0"
+                     :disabled="$store.doc.shippingMode === 'free'"
+                     :class="$store.doc.shippingMode === 'free' ? 'is-disabled' : ''"
+                     x-init="$el.value = $moneyFmt($store.doc.shippingCost)"
+                     @input="$store.doc.shippingCost = $moneyParse($event.target.value)"
+                     @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                     @blur="$el.value = $moneyFmt($store.doc.shippingCost)" />
+            </td>
+          </tr>
+          <tr>
+            <td class="label">PPN 11%</td>
+            <td class="val" x-text="money(totals.ppnAmount)"></td>
+          </tr>
+          <tr class="grand">
+            <td class="label">Total</td>
+            <td class="val">Rp <span x-text="money(totals.grandTotal)"></span></td>
+          </tr>
+        </table>
+      </section>
+
+      <section class="doc__terms region" data-map="terms">
+        <span class="db-tag">terms</span>
+        <h3>Syarat Pembayaran</h3>
+        <ol>
+          <template x-for="t in termsList" :key="t.id">
+            <li>
+              <template x-if="t.seq === 1">
+                <span>Harga
+                  <span class="delivery-term field" @click="deliveryOpen = !deliveryOpen" x-text="deliveryTerm"></span>
+                  , Net,
+                  <span x-text="$store.doc.ppnIncluded ? 'include PPN 11%' : 'exclude PPN 11%'"></span>.
+                  <span x-show="deliveryOpen" x-cloak @click.outside="deliveryOpen = false" class="delivery-dropdown">
+                    <button @click="setDelivery('Franco')">Franco</button>
+                    <button @click="setDelivery('Locco')">Locco</button>
+                  </span>
+                </span>
+              </template>
+              <template x-if="t.seq > 2">
+                <span>
+                  <span class="field term-field"
+                        contenteditable="true"
+                        :data-term-id="t.id"
+                        x-effect="termEditing[t.id] ? null : ($el.innerText = termDrafts[t.id] ?? t.body)"
+                        @focus="startTermEdit(t.id)"
+                        @input="termDrafts[t.id] = $event.target.innerText"
+                        @blur="cancelTermEdit(t.id)"></span>
+                  <button x-show="termEditing[t.id]" x-cloak
+                          class="default-pill"
+                          @mousedown.prevent="commitTermDefault(t.id)"
+                          x-transition>↺ Jadikan default</button>
+                  <button class="term-add"
+                          @click="addTerm()"
+                          title="Tambah syarat">+</button>
+                  <button class="term-del"
+                          @click="removeTerm(t.id)"
+                          title="Hapus syarat">×</button>
+                </span>
+              </template>
+            </li>
+          </template>
+        </ol>
+      </section>
+
+      <div class="doc__signoff region" data-map="signatories">
+        <span class="db-tag">signatories</span>
+        <p>Demikian Proforma Invoice ini kami sampaikan. Mohon melakukan pembayaran sesuai syarat di atas.</p>
+        <div class="doc__signatures">
+          <!-- Finance — dari master data signature -->
+          <div class="doc__signature" x-data="{ sig: $store.signatures.byRole('Finance') }">
+            <p>Hormat kami,</p>
+            <div class="sig-box"></div>
+            <div class="sig-name" x-text="sig?.name"></div>
+            <div class="sig-role" x-text="sig?.role"></div>
+          </div>
+          <!-- Customer acknowledgment -->
+          <div class="doc__signature doc__signature--customer" x-show="party">
+            <p>Disetujui oleh,</p>
+            <div class="sig-box"></div>
+            <div class="sig-name">Direktur/Keuangan</div>
+            <div class="sig-role" x-text="party?.name || ''"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+</article>
+</template>
+</div>
+</template>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!--  BELI — form internal: supplier PFI, payment request, approval        -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<template x-if="$store.doc.direction === 'beli'">
+<div>
+<article class="page" :class="{ 'page--locked': $store.doc.isLocked }">
+
+  <!-- ── HEADER ── -->
+  <header class="doc__head">
+    <div class="doc__head-left region" data-map="comp_logo">
+      <span class="db-tag">comp_logo · companies</span>
+      <img class="doc__logo" src="/logo.jpg" alt="Logo PT Rembulan Aurora Indonesia" />
+      <div class="doc__issuer">
+        <div class="doc__issuer-name" x-text="company?.name"></div>
+        <div class="field-row">
+          <span class="field field--multiline"
+                contenteditable="true"
+                data-field="address"
+                x-effect="editing.address ? null : ($el.innerText = companyDraft?.address || '')"
+                @focus="startEdit('address')"
+                @input="companyDraft.address = $event.target.innerText"
+                @blur="cancelEdit('address')"></span>
+        </div>
+        <div class="doc__contact-row">
+          <span class="field-label">Tel:</span>
+          <span class="field" contenteditable="true" data-field="phone" x-text="companyDraft?.phone"></span>
+        </div>
+      </div>
+    </div>
+    <div class="doc__head-right region" data-map="documents">
+      <span class="db-tag">documents</span>
+      <div class="doc__title">
+        <span x-text="$store.doc.docTitle"></span>
+        <small>
+          <span x-text="doc.doc_no"></span><template x-if="$store.doc.revisionCount > 0"><span x-text="' r' + $store.doc.revisionCount"></span></template>
+        </small>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════ SECTION 1: Info Supplier ════════════════ -->
+  <section class="pfi-beli__section region" data-map="parties">
+    <span class="db-tag">parties</span>
+    <h3 class="pfi-beli__heading">Informasi Supplier</h3>
+    <div class="pfi-beli__grid pfi-beli__grid--2col">
+
+      <!-- Supplier picker -->
+      <div class="pfi-beli__field">
+        <label class="pfi-beli__label">Supplier</label>
+        <div class="party-input-wrap"
+             x-data="partyPicker(party)"
+             @pick-party="setParty($event.detail)">
+          <input class="field party-search" type="text"
+                 x-model="query"
+                 placeholder="Pilih supplier..."
+                 @focus="focusField()"
+                 @input="buildResults()"
+                 @blur="close()" />
+          <div class="pp" x-show="open && !showQuickAdd" x-transition @mousedown.prevent="" x-cloak>
+            <template x-for="r in results" :key="r.id">
+              <button class="pp__item" @mousedown.prevent="pick(r.id)">
+                <span class="pp__name" x-text="r.name"></span>
+                <span class="pp__sub" x-text="r.contact_person + (r.contact_phone ? ' · ' + r.contact_phone : '')"></span>
+              </button>
+            </template>
+            <template x-if="results.length === 0">
+              <div class="pp__empty">Tidak ada hasil untuk "<span x-text="query"></span>"</div>
+            </template>
+            <button class="pp__quickadd" @mousedown.prevent="openQuickAdd()">+ Quick Add</button>
+          </div>
+          <div class="pp qa" x-show="showQuickAdd" x-transition x-cloak>
+            <div class="qa__title">Tambah Kontak Baru</div>
+            <label class="qa__field"><span>Nama Perusahaan</span>
+              <input type="text" x-model="qaName" @keydown.enter="saveQuickAdd()" /></label>
+            <label class="qa__field"><span>Alamat Kantor</span>
+              <input type="text" x-model="qaAddress" /></label>
+            <label class="qa__field"><span>Nama PIC</span>
+              <input type="text" x-model="qaContact" /></label>
+            <label class="qa__field"><span>No. Kontak PIC</span>
+              <input type="text" x-model="qaPhone" /></label>
+            <div class="qa__actions">
+              <button class="qa__btn qa__btn--ghost" @mousedown.prevent="showQuickAdd = false">Batal</button>
+              <button class="qa__btn qa__btn--primary" @mousedown.prevent="saveQuickAdd()">Simpan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supplier address (readonly from party) -->
+      <div class="pfi-beli__field">
+        <label class="pfi-beli__label">Alamat Supplier</label>
+        <span class="field field--multiline pfi-beli__readonly" x-text="party?.address || '—'"></span>
+      </div>
+    </div>
+
+    <!-- No PFI Supplier + Upload -->
+    <div class="pfi-beli__grid pfi-beli__grid--2col">
+      <div class="pfi-beli__field">
+        <label class="pfi-beli__label">No PFI Supplier</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="supplier-pfi-no"
+              x-effect="editing['supplier-pfi-no'] ? null : ($el.innerText = doc?.supplier_pfi_no || '')"
+              @focus="startEdit('supplier-pfi-no')"
+              @input="doc.supplier_pfi_no = $event.target.innerText"
+              @blur="cancelEdit('supplier-pfi-no')"></span>
+      </div>
+      <div class="pfi-beli__field pfi-beli__upload">
+        <label class="pfi-beli__label">Upload PFI dari Supplier</label>
+        <div x-data="fileUpload(doc?.supplier_pfi_file || '', (v) => doc.supplier_pfi_file = v)" class="pfi-beli__file-pick">
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none"
+                 x-ref="up"
+                 @change="handlePick($event)" />
+          <label x-show="!file">
+            <span @click="$refs.up.click()" class="pfi-beli__file-btn">📎 Pilih file</span>
+          </label>
+          <div x-show="file" x-cloak class="pfi-beli__file-preview">
+            <img x-show="previewUrl" :src="previewUrl" class="pfi-beli__file-thumb"
+                 @click="openViewer()" title="Klik untuk lihat penuh" />
+            <span x-show="!previewUrl" class="pfi-beli__file-icon">📄</span>
+            <b x-text="file" @click="openViewer()" style="cursor:pointer" :title="isImage ? 'Klik untuk lihat penuh' : ''"></b>
+            <button @click="replace()" class="pfi-beli__file-replace" title="Ganti file">[G]</button>
+            <button @click="clearFile()" class="pfi-beli__file-clear" title="Hapus file">×</button>
+          </div>
+          <div x-show="log.length" x-cloak class="pfi-beli__file-log">
+            <small>Riwayat:</small>
+            <template x-for="(f,i) in log" :key="i">
+              <span class="pfi-beli__file-log-item" x-text="f"></span>
+            </template>
+          </div>
+          <!-- Viewer popup -->
+          <div class="upload-viewer" x-show="viewerOpen" x-cloak @click.self="closeViewer()">
+            <button class="upload-viewer__close" @click="closeViewer()">✕</button>
+            <img x-show="isImage && previewUrl" :src="previewUrl" class="upload-viewer__img" />
+            <div x-show="!isImage || !previewUrl" class="upload-viewer__placeholder">
+              <span class="upload-viewer__file-icon" x-text="fileIcon"></span>
+              <b x-text="file"></b>
+              <p>Tidak ada pratinjau (mockup)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════ SECTION 2: Line Items ════════════════ -->
+  <section class="region" data-map="document_lines">
+    <span class="db-tag">document_lines</span>
+    <h3 class="pfi-beli__heading">Item Tagihan</h3>
+    <table class="doc__lines">
+      <thead>
+        <tr>
+          <th class="col-no">No</th>
+          <th>Nama Barang</th>
+          <th class="col-qty">Qty</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-price">Harga Satuan</th>
+          <th class="col-total">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(line, idx) in lines" :key="line.id">
+          <tr class="doc__line">
+            <td class="col-no">
+              <span class="line-add" @click="addLine(idx + 1)" title="Tambah baris di bawah">+</span>
+              <span class="line-no" x-text="idx + 1"></span>
+              <span class="line-del" @click="removeLine(idx)" title="Hapus baris">×</span>
+            </td>
+            <td>
+              <span class="field" contenteditable="true"
+                    x-init="$el.innerText = line.item_name || ''"
+                    @input="line.item_name = $event.target.innerText"
+                    @focus="$el.select?.()"></span>
+            </td>
+            <td class="col-qty">
+              <input class="field num-field" type="text" inputmode="numeric"
+                     placeholder="0"
+                     :value="$intFmt(line.qty)"
+                     @input="line.qty = $intParse($event.target.value); $store.doc.touch()"
+                     @focus="$el.value = $intParse($el.value) || ''; $el.select()" />
+            </td>
+            <td class="col-unit">
+              <select class="field unit-select" x-model="line.unit">
+                <option value="Pcs">Pcs</option>
+                <option value="Kg">Kg</option>
+                <option value="Meter">Meter</option>
+                <option value="Roll">Roll</option>
+                <option value="Set">Set</option>
+                <option value="Lot">Lot</option>
+                <option value="Lembar">Lembar</option>
+                <option value="Batang">Batang</option>
+                <option value="Unit">Unit</option>
+              </select>
+            </td>
+            <td class="col-price">
+              <input class="field num-field" type="text" inputmode="numeric"
+                     placeholder="0"
+                     x-init="$el.value = $moneyFmt(line.unit_price)"
+                     @input="line.unit_price = $moneyParse($event.target.value); $store.doc.touch()"
+                     @focus="$el.value = $moneyParse($el.value) || ''; $el.select()"
+                     @blur="$el.value = $moneyFmt(line.unit_price)" />
+            </td>
+            <td class="col-total doc__line-total" x-text="money(line.qty * line.unit_price)"></td>
+          </tr>
+        </template>
+        <template x-if="lines.length === 0">
+          <tr class="doc__line-empty">
+            <td colspan="6">
+              <span class="line-empty-add" @click="addLine(0)">+ Tambah item pertama</span>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+
+    <div class="doc__totals">
+      <table class="doc__totals-table">
+        <tr>
+          <td class="label">Subtotal</td>
+          <td class="val" x-text="money(subtotal)"></td>
+        </tr>
+        <tr>
+          <td class="label">PPN 11%</td>
+          <td class="val" x-text="money(subtotal * 11 / 111)"></td>
+        </tr>
+        <tr class="grand">
+          <td class="label">Total Tagihan</td>
+          <td class="val">Rp <span x-text="money(subtotal)"></span></td>
+        </tr>
+      </table>
+    </div>
+  </section>
+  <!-- ════════════════ SECTION 5: Rekening Supplier ════════════════ -->
+  <section class="pfi-beli__section region" data-map="documents.supplier_bank">
+    <span class="db-tag">documents · supplier_bank</span>
+    <h3 class="pfi-beli__heading">Rekening Supplier</h3>
+    <div class="pfi-beli__grid pfi-beli__grid--3col">
+      <div class="pfi-beli__field">
+        <label class="pfi-beli__label">Nama Bank</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="supplier-bank"
+              x-effect="editing['supplier-bank'] ? null : ($el.innerText = doc?.supplier_bank_name || '')"
+              @focus="startEdit('supplier-bank')"
+              @input="doc.supplier_bank_name = $event.target.innerText"
+              @blur="cancelEdit('supplier-bank')"></span>
+      </div>
+      <div class="pfi-beli__field">
+        <label class="pfi-beli__label">No. Rekening</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="supplier-account"
+              x-effect="editing['supplier-account'] ? null : ($el.innerText = doc?.supplier_bank_account || '')"
+              @focus="startEdit('supplier-account')"
+              @input="doc.supplier_bank_account = $event.target.innerText"
+              @blur="cancelEdit('supplier-account')"></span>
+      </div>
+      <div class="pfi-beli__field">
+        <label class="pfi-beli__label">Atas Nama</label>
+        <span class="field"
+              contenteditable="true"
+              data-field="supplier-account-name"
+              x-effect="editing['supplier-account-name'] ? null : ($el.innerText = doc?.supplier_bank_account_name || '')"
+              @focus="startEdit('supplier-account-name')"
+              @input="doc.supplier_bank_account_name = $event.target.innerText"
+              @blur="cancelEdit('supplier-account-name')"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════ SECTION 6: Persetujuan ════════════════ -->
+  <section class="pfi-beli__section region" data-map="documents.approval">
+    <span class="db-tag">documents · approval</span>
+    <h3 class="pfi-beli__heading">Persetujuan</h3>
+    <div class="pfi-beli__grid pfi-beli__grid--2col">
+
+      <!-- Finance Approval -->
+      <div class="pfi-beli__approval-card">
+        <div class="pfi-beli__approval-header">
+          <span class="pfi-beli__approval-title">Keuangan</span>
+          <span class="pfi-beli__approval-badge"
+                :class="'pfi-beli__approval-badge--' + (doc?.finance_approval || 'pending')"
+                x-text="doc?.finance_approval === 'approved' ? 'DISETUJUI' : doc?.finance_approval === 'rejected' ? 'DITOLAK' : 'MENUNGGU'"></span>
+        </div>
+        <div class="pfi-beli__approval-body">
+          <div class="pfi-beli__field pfi-beli__field--sm">
+            <label class="pfi-beli__label pfi-beli__label--sm">Disetujui oleh</label>
+            <span class="field"
+                  contenteditable="true"
+                  data-field="finance-by"
+                  x-effect="editing['finance-by'] ? null : ($el.innerText = doc?.finance_approved_by || '')"
+                  @focus="startEdit('finance-by')"
+                  @input="doc.finance_approved_by = $event.target.innerText"
+                  @blur="cancelEdit('finance-by')"></span>
+          </div>
+          <div class="pfi-beli__field pfi-beli__field--sm" x-data="datePicker(doc.finance_approval_date || '')" @set-date="doc.finance_approval_date = $event.detail">
+            <label class="pfi-beli__label pfi-beli__label--sm">Tanggal</label>
+            <span class="field date-field" @click="toggle()" x-text="fmtDate(selected)"></span>
+            <div class="cal" x-show="open" x-transition @click.outside="open=false" x-cloak>
+              <div class="cal__head">
+                <button class="cal__nav" @click="prevMonth()" aria-label="Bulan sebelumnya">‹</button>
+                <span class="cal__title" x-text="monthLabel()"></span>
+                <button class="cal__nav" @click="nextMonth()" aria-label="Bulan berikutnya">›</button>
+              </div>
+              <div class="cal__weekdays">
+                <template x-for="w in weekDays" :key="w"><span x-text="w"></span></template>
+              </div>
+              <div class="cal__grid">
+                <template x-for="d in days" :key="d.iso">
+                  <button class="cal__day"
+                          :class="{ 'cal__day--out': !d.inMonth, 'cal__day--today': d.isToday, 'cal__day--sel': d.isSelected }"
+                          @click="pick(d.iso)" x-text="d.day"></button>
+                </template>
+              </div>
+              <button class="cal__today" @click="pickToday()">Hari ini</button>
+            </div>
+          </div>
+          <div class="pfi-beli__field pfi-beli__field--sm">
+            <label class="pfi-beli__label pfi-beli__label--sm">Catatan</label>
+            <span class="field field--multiline"
+                  contenteditable="true"
+                  data-field="finance-notes"
+                  x-effect="editing['finance-notes'] ? null : ($el.innerText = doc?.finance_approval_notes || '')"
+                  @focus="startEdit('finance-notes')"
+                  @input="doc.finance_approval_notes = $event.target.innerText"
+                  @blur="cancelEdit('finance-notes')"></span>
+          </div>
+          <!-- Approval action buttons -->
+          <div class="pfi-beli__approval-actions" x-show="doc?.finance_approval !== 'approved'">
+            <button class="pfi-beli__btn-approve"
+                    @click="doc.finance_approval = 'approved'; doc.finance_approval_date = new Date().toISOString().slice(0,10)">
+              ✓ Setujui
+            </button>
+            <button class="pfi-beli__btn-reject"
+                    @click="doc.finance_approval = 'rejected'">
+              ✕ Tolak
+            </button>
+          </div>
+          <button class="pfi-beli__btn-reset" x-show="doc?.finance_approval === 'approved' || doc?.finance_approval === 'rejected'"
+                  @click="doc.finance_approval = 'pending'; doc.finance_approval_date = ''; doc.finance_approved_by = ''; doc.finance_approval_notes = ''">
+            ↻ Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Director Approval -->
+      <div class="pfi-beli__approval-card">
+        <div class="pfi-beli__approval-header">
+          <span class="pfi-beli__approval-title">Direktur</span>
+          <span class="pfi-beli__approval-badge"
+                :class="'pfi-beli__approval-badge--' + (doc?.director_approval || 'pending')"
+                x-text="doc?.director_approval === 'approved' ? 'DISETUJUI' : doc?.director_approval === 'rejected' ? 'DITOLAK' : 'MENUNGGU'"></span>
+        </div>
+        <div class="pfi-beli__approval-body">
+          <div class="pfi-beli__field pfi-beli__field--sm">
+            <label class="pfi-beli__label pfi-beli__label--sm">Disetujui oleh</label>
+            <span class="field"
+                  contenteditable="true"
+                  data-field="director-by"
+                  x-effect="editing['director-by'] ? null : ($el.innerText = doc?.director_approved_by || '')"
+                  @focus="startEdit('director-by')"
+                  @input="doc.director_approved_by = $event.target.innerText"
+                  @blur="cancelEdit('director-by')"></span>
+          </div>
+          <div class="pfi-beli__field pfi-beli__field--sm" x-data="datePicker(doc.director_approval_date || '')" @set-date="doc.director_approval_date = $event.detail">
+            <label class="pfi-beli__label pfi-beli__label--sm">Tanggal</label>
+            <span class="field date-field" @click="toggle()" x-text="fmtDate(selected)"></span>
+            <div class="cal" x-show="open" x-transition @click.outside="open=false" x-cloak>
+              <div class="cal__head">
+                <button class="cal__nav" @click="prevMonth()" aria-label="Bulan sebelumnya">‹</button>
+                <span class="cal__title" x-text="monthLabel()"></span>
+                <button class="cal__nav" @click="nextMonth()" aria-label="Bulan berikutnya">›</button>
+              </div>
+              <div class="cal__weekdays">
+                <template x-for="w in weekDays" :key="w"><span x-text="w"></span></template>
+              </div>
+              <div class="cal__grid">
+                <template x-for="d in days" :key="d.iso">
+                  <button class="cal__day"
+                          :class="{ 'cal__day--out': !d.inMonth, 'cal__day--today': d.isToday, 'cal__day--sel': d.isSelected }"
+                          @click="pick(d.iso)" x-text="d.day"></button>
+                </template>
+              </div>
+              <button class="cal__today" @click="pickToday()">Hari ini</button>
+            </div>
+          </div>
+          <div class="pfi-beli__field pfi-beli__field--sm">
+            <label class="pfi-beli__label pfi-beli__label--sm">Catatan</label>
+            <span class="field field--multiline"
+                  contenteditable="true"
+                  data-field="director-notes"
+                  x-effect="editing['director-notes'] ? null : ($el.innerText = doc?.director_approval_notes || '')"
+                  @focus="startEdit('director-notes')"
+                  @input="doc.director_approval_notes = $event.target.innerText"
+                  @blur="cancelEdit('director-notes')"></span>
+          </div>
+          <div class="pfi-beli__approval-actions" x-show="doc?.director_approval !== 'approved'">
+            <button class="pfi-beli__btn-approve"
+                    @click="doc.director_approval = 'approved'; doc.director_approval_date = new Date().toISOString().slice(0,10)">
+              ✓ Setujui
+            </button>
+            <button class="pfi-beli__btn-reject"
+                    @click="doc.director_approval = 'rejected'">
+              ✕ Tolak
+            </button>
+          </div>
+          <button class="pfi-beli__btn-reset" x-show="doc?.director_approval === 'approved' || doc?.director_approval === 'rejected'"
+                  @click="doc.director_approval = 'pending'; doc.director_approval_date = ''; doc.director_approved_by = ''; doc.director_approval_notes = ''">
+            ↻ Reset
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</article>
+</div>
+</template>
+
+</div>

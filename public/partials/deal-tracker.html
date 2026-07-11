@@ -1,0 +1,96 @@
+<!--
+  PARTIAL BODY: deal-tracker.html  (swapped into #doc-body by htmx)
+  ----------------------------------------------------------------------------
+  Dashboard — Deal Tracker. Card-based view of all locked Sales Orders.
+  Monitors Chain Jual (SO → PFI → Delivery → Invoice)
+  and Chain Beli (PO → PFI → Delivery → Invoice).
+  Shows real-time HPP, margin, and chain progress per deal.
+-->
+<div class="deal-tracker" x-data>
+  <div class="deal-tracker__header">
+    <h1 class="deal-tracker__title">Deal Tracker</h1>
+    <p class="deal-tracker__sub">
+      Memantau deal dari Sales Order hingga Invoice. HPP dan margin dihitung
+      real-time dari dokumen yangterkait.
+    </p>
+  </div>
+
+  <!-- Empty state -->
+  <template x-if="$store.deal.deals.length === 0">
+    <div class="deal-tracker__empty">
+      <div class="deal-tracker__empty-icon">◆</div>
+      <p class="deal-tracker__empty-title">Belum ada deal</p>
+      <p class="deal-tracker__empty-hint">Simpan Sales Order untuk memulai tracking.</p>
+    </div>
+  </template>
+
+  <!-- Deal cards grid -->
+  <div class="deal-cards" x-show="$store.deal.deals.length > 0">
+    <template x-for="deal in $store.deal.deals" :key="deal.soId">
+      <div class="deal-card">
+        <!-- Header -->
+        <div class="deal-card__header">
+          <div class="deal-card__customer" x-text="deal.customerName"></div>
+          <div class="deal-card__no" x-text="deal.soNo"></div>
+        </div>
+        <div class="deal-card__meta">
+          <span x-text="deal.dateLabel"></span>
+          <span class="deal-card__dot">·</span>
+          <span x-text="deal.marketingName"></span>
+        </div>
+
+        <!-- Financials -->
+        <div class="deal-card__financials">
+          <div class="deal-fin">
+            <span class="deal-fin__label">Nilai Deal</span>
+            <b class="deal-fin__val" x-text="'Rp ' + deal.nilaiDealLabel"></b>
+          </div>
+          <div class="deal-fin">
+            <span class="deal-fin__label">HPP</span>
+            <b class="deal-fin__val" x-text="'Rp ' + deal.hppLabel"></b>
+          </div>
+          <div class="deal-fin deal-fin--margin">
+            <span class="deal-fin__label">Margin</span>
+            <b class="deal-fin__val">
+              <span x-text="'Rp ' + deal.marginLabel"></span>
+              <small x-text="deal.marginPct.toFixed(1) + '%'"></small>
+            </b>
+          </div>
+        </div>
+
+        <!-- Chain Jual -->
+        <div class="deal-chain">
+          <div class="deal-chain__label">Chain Jual</div>
+          <div class="deal-chain__steps">
+            <template x-for="(step, i) in deal.chainJual" :key="'j'+i">
+              <div class="chain-step" :class="'chain-step--' + step.status">
+                <span class="chain-step__dot"></span>
+                <span class="chain-step__label" x-text="step.label"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Chain Beli -->
+        <div class="deal-chain">
+          <div class="deal-chain__label">Chain Beli</div>
+          <div class="deal-chain__steps">
+            <template x-for="(step, i) in deal.chainBeli" :key="'b'+i">
+              <div class="chain-step" :class="'chain-step--' + step.status">
+                <span class="chain-step__dot"></span>
+                <span class="chain-step__label" x-text="step.label"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Payment status -->
+        <div class="deal-pay">
+          <span class="deal-pay__label">Pembayaran</span>
+          <span class="deal-pay__badge" :class="'deal-pay__badge--' + deal.paymentStatus"
+                x-text="deal.paymentLabel"></span>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
