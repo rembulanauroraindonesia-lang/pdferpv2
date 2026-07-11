@@ -24,6 +24,7 @@ import htmx from "htmx.org";
 
 import { docStore, type DocStore } from "@/state/docStore";
 import { dealStore } from "@/state/dealStore";
+import { paymentStore } from "@/state/paymentStore";
 import { shellStore } from "@/state/shellStore";
 import { makeDocumentView } from "@/components/documentView";
 import { docBody } from "@/components/docBody";
@@ -86,6 +87,7 @@ window.ERP = ERP;
 Alpine.store("doc", docStore());
 Alpine.store("shell", shellStore());
 Alpine.store("deal", dealStore());
+Alpine.store("payment", paymentStore());
 Alpine.store("parties", partiesStore());
 Alpine.store("signatures", signatureStore());
 Alpine.store("items", itemsStore());

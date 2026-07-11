@@ -830,3 +830,712 @@
   font-size: 13px;
   margin: 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAYMENTS — Centralized Payment Dashboard
+   ═══════════════════════════════════════════════════════════════════ */
+
+.payments-view {
+  padding: var(--s-5);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.payments-view__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--s-5);
+}
+
+.payments-view__title {
+  font-family: var(--font-display);
+  font-size: var(--td-lg);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ink);
+  margin: 0;
+}
+
+.payments-view__sub {
+  font-size: var(--td-small);
+  color: var(--c-ink-3);
+  margin: var(--s-1) 0 0;
+}
+
+.payments-view__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.payments-view__count {
+  font-size: var(--td-small);
+  color: var(--c-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.payments-view__add {
+  padding: 8px 16px;
+  font-size: var(--td-small);
+  font-weight: 600;
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-1);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.payments-view__add:hover { background: var(--c-accent-2); }
+
+/* ── Filters ── */
+.payments-view__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.pay-filter {
+  padding: 6px 10px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  font-size: var(--td-small);
+  color: var(--c-ink);
+  background: var(--c-bg);
+  outline: none;
+  min-width: 140px;
+}
+.pay-filter:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-accent) 20%, transparent);
+}
+.pay-filter--search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.payments-view__filtered {
+  font-size: 11px;
+  color: var(--c-ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Empty state ── */
+.payments-view__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  text-align: center;
+}
+.payments-view__empty-icon {
+  font-size: 48px;
+  opacity: 0.3;
+  margin-bottom: var(--s-3);
+}
+.payments-view__empty-title {
+  font-size: var(--t-md);
+  font-weight: 600;
+  color: var(--c-ink-2);
+  margin-bottom: var(--s-2);
+}
+.payments-view__empty-hint {
+  font-size: var(--t-sm);
+  color: var(--c-ink-3);
+}
+
+/* ── Table ── */
+.payments-view__table-wrap {
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-2);
+  overflow: hidden;
+}
+
+.payments-view__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--td-small);
+}
+
+.payments-view__table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--c-bg-2);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-ink-2);
+  border-bottom: 2px solid var(--c-line);
+  white-space: nowrap;
+}
+
+.payments-view__table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--c-line-2);
+  color: var(--c-ink);
+  vertical-align: top;
+}
+
+.payments-view__table tbody tr:hover {
+  background: color-mix(in srgb, var(--c-accent) 4%, transparent);
+}
+
+/* ── Row cells ── */
+.pay-row__no {
+  width: 36px;
+  text-align: center;
+  color: var(--c-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.pay-row__date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.pay-row__party {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.pay-row__linked {
+  min-width: 140px;
+}
+.pay-linked-doc {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--td-smaller);
+  font-weight: 600;
+  color: var(--c-ink);
+}
+.pay-linked-type {
+  font-size: 11px;
+  color: var(--c-ink-3);
+}
+
+/* ── Direction badge ── */
+.pay-dir {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pay-dir--jual {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.pay-dir--beli {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* ── Terms ── */
+.pay-terms {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.pay-terms__cat {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pay-terms__cat--cash {
+  background: #dcfce7;
+  color: #15803d;
+}
+.pay-terms__cat--credit {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+.pay-terms__channel {
+  font-weight: 500;
+  color: var(--c-ink-2);
+}
+.pay-terms__days {
+  font-size: 11px;
+  color: var(--c-ink-3);
+}
+.pay-terms__giro-info,
+.pay-terms__tempo-info {
+  font-size: 11px;
+  color: var(--c-ink-3);
+  margin-top: 2px;
+  font-family: var(--font-mono, monospace);
+}
+
+/* ── Amount ── */
+.pay-row__amount {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.pay-amount {
+  font-weight: 600;
+  color: var(--c-ink);
+}
+.pay-amount-paid {
+  font-size: 11px;
+  color: var(--c-ink-3);
+}
+
+/* ── Status Badge ── */
+.pay-row__status {
+  width: 130px;
+}
+
+.pay-status-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pay-status-badge--draft {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.pay-status-badge--lunas {
+  background: #dcfce7;
+  color: #15803d;
+}
+.pay-status-badge--cair {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.pay-status-badge--ditolak {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.pay-status-badge--bad_debt {
+  background: #1f2937;
+  color: #f9fafb;
+}
+.pay-status-badge--telat {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.pay-status-badge--proses {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* ── Actions ── */
+.pay-row__actions {
+  white-space: nowrap;
+}
+.pay-act {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--c-ink-3);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--r-1);
+  line-height: 1;
+  transition: all 0.12s;
+}
+.pay-act:hover {
+  color: var(--c-ink);
+  border-color: var(--c-line);
+  background: var(--c-bg-2);
+}
+.pay-act--del:hover {
+  color: var(--c-danger);
+  border-color: color-mix(in srgb, var(--c-danger) 30%, transparent);
+}
+
+/* ── Row status tint ── */
+.pay-row--telat {
+  background: color-mix(in srgb, #c2410c 4%, transparent);
+}
+.pay-row--bad_debt {
+  opacity: 0.6;
+}
+
+/* ══════════════ PAYMENT MODAL ════════════════ */
+.pay-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.pay-modal {
+  background: var(--c-bg);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-3);
+  width: 600px;
+  max-width: 96vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+}
+
+.pay-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--c-line);
+}
+.pay-modal__head h3 {
+  font-family: var(--font-display);
+  font-size: var(--td-base);
+  font-weight: 700;
+  margin: 0;
+  color: var(--c-ink);
+}
+
+.pay-modal__close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--c-ink-3);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: var(--r-1);
+}
+.pay-modal__close:hover { color: var(--c-ink); background: var(--c-bg-2); }
+
+.pay-modal__body {
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pay-modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--c-line);
+}
+
+.pay-modal__btn {
+  padding: 8px 20px;
+  font-size: var(--td-small);
+  font-weight: 600;
+  border-radius: var(--r-1);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.pay-modal__btn--ghost {
+  background: transparent;
+  color: var(--c-ink-2);
+  border-color: var(--c-line);
+}
+.pay-modal__btn--ghost:hover { background: var(--c-bg-2); }
+.pay-modal__btn--primary {
+  background: var(--c-accent);
+  color: #fff;
+}
+.pay-modal__btn--primary:hover { background: var(--c-accent-2); }
+.pay-modal__btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Form elements ── */
+.pay-form-section {
+  padding: var(--s-3) 0;
+}
+
+.pay-form-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-2);
+  margin-bottom: var(--s-2);
+}
+
+.pay-form-divider {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-ink-3);
+  padding: var(--s-2) 0 var(--s-1);
+  border-top: 1px solid var(--c-line);
+  margin-top: var(--s-2);
+}
+
+.pay-form-sublabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-ink-2);
+  margin-bottom: 6px;
+}
+
+/* Direction toggle */
+.pay-form-dir {
+  display: flex;
+  gap: var(--s-2);
+}
+.pay-dir-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1.5px solid var(--c-line);
+  border-radius: var(--r-1);
+  background: var(--c-bg);
+  color: var(--c-ink-2);
+  font-size: var(--td-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.pay-dir-btn:hover { border-color: var(--c-accent); color: var(--c-ink); }
+.pay-dir-btn--active {
+  border-color: var(--c-accent);
+  background: color-mix(in srgb, var(--c-accent) 8%, transparent);
+  color: var(--c-accent);
+}
+.pay-dir-btn__icon { font-size: 14px; }
+
+/* Category / method toggle */
+.pay-form-cat {
+  display: flex;
+  gap: var(--s-2);
+}
+.pay-cat-btn {
+  padding: 6px 14px;
+  border: 1.5px solid var(--c-line);
+  border-radius: var(--r-1);
+  background: var(--c-bg);
+  color: var(--c-ink-2);
+  font-size: var(--td-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.pay-cat-btn:hover { border-color: var(--c-accent); color: var(--c-ink); }
+.pay-cat-btn--active {
+  border-color: var(--c-accent);
+  background: color-mix(in srgb, var(--c-accent) 8%, transparent);
+  color: var(--c-accent);
+}
+
+/* Form rows and fields */
+.pay-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+}
+
+.pay-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pay-form-field > span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pay-form-field input,
+.pay-form-field textarea,
+.pay-form-select {
+  padding: 8px 10px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  font-size: var(--td-small);
+  color: var(--c-ink);
+  background: var(--c-bg);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pay-form-field input:focus,
+.pay-form-field textarea:focus,
+.pay-form-select:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-accent) 20%, transparent);
+}
+.pay-form-field textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.pay-form-select {
+  padding: 8px 10px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  font-size: var(--td-small);
+  color: var(--c-ink);
+  background: var(--c-bg);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pay-form-select:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-accent) 20%, transparent);
+}
+
+/* Amount field */
+.pay-form-field--amount {
+  max-width: 360px;
+}
+.pay-form-amount-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.pay-form-amount-wrap:focus-within {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-accent) 20%, transparent);
+}
+.pay-form-amount-prefix {
+  padding: 8px 10px;
+  background: var(--c-bg-2);
+  color: var(--c-ink-2);
+  font-weight: 600;
+  font-size: var(--td-small);
+  border-right: 1px solid var(--c-line);
+}
+.pay-form-amount-input {
+  flex: 1;
+  border: none;
+  padding: 8px 10px;
+  font-size: var(--td-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--c-ink);
+  background: transparent;
+  outline: none;
+  min-width: 0;
+}
+.pay-form-amount-hint {
+  font-size: 11px;
+  color: var(--c-ink-3);
+  margin-top: 2px;
+}
+
+/* Linked doc info */
+.pay-form-linked-info {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--c-bg-2);
+  border-radius: var(--r-1);
+  font-size: var(--td-small);
+  color: var(--c-ink-2);
+  margin-top: 6px;
+}
+
+/* Upload section */
+.pay-form-upload input {
+  padding: 8px 10px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-1);
+  font-size: var(--td-small);
+  color: var(--c-ink);
+  background: var(--c-bg);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pay-form-upload input:focus {
+  border-color: var(--c-accent);
+}
+
+/* Hint text */
+.pay-form-hint {
+  font-size: 11px;
+  color: var(--c-ink-3);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .payments-view__table { font-size: 11px; }
+  .payments-view__table th, .payments-view__table td { padding: 8px 8px; }
+  .pay-status-badge { font-size: 10px; padding: 2px 8px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAYMENT BADGE — shown on PFI / Invoice documents
+   ═══════════════════════════════════════════════════════════════════ */
+
+.pay-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pay-badge--draft {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.pay-badge--lunas {
+  background: #dcfce7;
+  color: #15803d;
+}
+.pay-badge--cair {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.pay-badge--ditolak {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.pay-badge--bad_debt {
+  background: #1f2937;
+  color: #f9fafb;
+}
+.pay-badge--telat {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.pay-badge--proses {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* ── Chain PAY step (Deal Tracker) ── */
+.chain-step--pay {  /* alias for payment step in chain */ }
+
+/* Items table view fix */
+.items-view {
+  padding: var(--s-5);
+  max-width: 1200px;
+  margin: 0 auto;
+}

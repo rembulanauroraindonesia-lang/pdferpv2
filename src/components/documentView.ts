@@ -75,6 +75,15 @@ export function makeDocumentView(Alpine: typeof import("alpinejs")) {
           return;
         }
 
+        // Payments: special route — centralized payment dashboard.
+        if (shell.activeView === "payments") {
+          htmx.ajax("get", "/partials/payments.html", {
+            target: "#doc-body",
+            swap: "innerHTML",
+          });
+          return;
+        }
+
         // Parties: master data view — not a document type.
         if (shell.activeView === "parties") {
           htmx.ajax("get", "/partials/parties.html", {
@@ -96,6 +105,15 @@ export function makeDocumentView(Alpine: typeof import("alpinejs")) {
         // Signature: master data — not a document type.
         if (shell.activeView === "signature") {
           htmx.ajax("get", "/partials/signature.html", {
+            target: "#doc-body",
+            swap: "innerHTML",
+          });
+          return;
+        }
+
+        // Items: master data — not a document type.
+        if (shell.activeView === "items") {
+          htmx.ajax("get", "/partials/items.html", {
             target: "#doc-body",
             swap: "innerHTML",
           });

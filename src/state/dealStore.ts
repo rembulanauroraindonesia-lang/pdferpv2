@@ -5,10 +5,11 @@
  * `documents[]` where type === 'sales_order' AND status === 'sent'.
  *
  * Each deal tracks two chains:
- *   Chain Jual: SO → PFI (jual) → Delivery (jual) → Invoice (jual)
- *   Chain Beli: PO (beli) → PFI (beli) → Delivery (beli) → Invoice (beli)
+ *   Chain Jual: SO → PFI (jual) → Delivery (jual) → Invoice (jual) → PAY
+ *   Chain Beli: PO (beli) → PFI (beli) → Pickup (beli) → Invoice (beli) → PAY
  *
  * HPP and margin are computed from SO line pricings.
+ * Payment status uses $store.payment.getPaymentBadgeForDoc() for accuracy.
  */
 import { documents } from "@/data/documents";
 import { linesByDocument } from "@/data/documentLines";
@@ -40,8 +41,9 @@ export interface Deal {
   marginPct: number;
   chainJual: ChainStep[];
   chainBeli: ChainStep[];
-  paymentStatus: "lunas" | "sebagian" | "proses" | "belum";
+  paymentStatus: string;
   paymentLabel: string;
+  paymentCss: string;
 }
 
 export interface DealStore {
@@ -79,24 +81,22 @@ function buildDeal(so: Document): Deal {
   const margin = nilaiDeal - hpp;
   const marginPct = hpp > 0 ? (margin / hpp) * 100 : 0;
 
-  // Chain Jual: SO → PFI (jual) → Delivery (jual) → Invoice (jual)
+  // Chain Jual: SO → PFI (jual) → Delivery (jual) → Invoice (jual) → PAY
   const chainJual = buildChainJual(so);
 
-  // Chain Beli: PO (beli) → PFI (beli) → Delivery (beli) → Invoice (beli)
+  // Chain Beli: PO (beli) → PFI (beli) → Pickup (beli) → Invoice (beli) → PAY
   const chainBeli = buildChainBeli();
 
-  // Payment status: check if payment docs exist linked to this deal's chain.
-  // Walk the Jual chain to find an invoice, then look for payment docs.
-  const invoiceJual = chainJual.find((s) => s.type === "invoice" && s.status !== "absent");
-  const paymentStatus = resolvePaymentStatus(so.id, invoiceJual?.docNo);
+  // Payment status: derived from payment documents in the chain
+  const paymentInfo = resolvePaymentStatus(so.id);
 
   return {
     soId: so.id,
     soNo: so.doc_no,
-    customerName: party?.name ?? "—",
+    customerName: party?.name ?? "\u2014",
     date: so.date,
     dateLabel: formatDateID(so.date),
-    marketingName: marketing?.name ?? "—",
+    marketingName: marketing?.name ?? "\u2014",
     nilaiDeal,
     nilaiDealLabel: formatNumber(nilaiDeal),
     hpp,
@@ -106,8 +106,9 @@ function buildDeal(so: Document): Deal {
     marginPct,
     chainJual,
     chainBeli,
-    paymentStatus: paymentStatus.status,
-    paymentLabel: paymentStatus.label,
+    paymentStatus: paymentInfo.status,
+    paymentLabel: paymentInfo.label,
+    paymentCss: paymentInfo.css,
   };
 }
 
@@ -158,11 +159,20 @@ function buildChainJual(so: Document): ChainStep[] {
   const invoiceParent = delivery?.id ?? pfi?.id ?? so.id;
   const invoice = findChildDoc(invoiceParent, "invoice", "jual");
 
+  // Step 5: Payment (parent = Invoice if exists, else PFI)
+  const payParent = invoice?.id ?? pfi?.id;
+  const payment = payParent
+    ? documents.find(
+        (d) => d.type === "payment" && d.parent_doc_id === payParent && d.status !== "cancelled",
+      )
+    : undefined;
+
   return [
     soStep,
     stepFromDoc("proforma_invoice", "PFI", pfi),
     stepFromDoc("delivery", "DEL", delivery),
     stepFromDoc("invoice", "INV", invoice),
+    stepFromDoc("payment", "PAY", payment),
   ];
 }
 
@@ -171,18 +181,27 @@ function buildChainBeli(): ChainStep[] {
   // Future: match by supplier_id from SO line pricings or explicit parent_doc_id.
 
   const findBeli = (type: string): Document | undefined =>
-    documents.find((d) => d.type === type && d.direction === "beli");
+    documents.find((d) => d.type === type && d.direction === "beli" && d.status !== "cancelled");
 
   const po = findBeli("po");
   const pfi = findBeli("proforma_invoice");
   const pickup = findBeli("pickup");
   const invoice = findBeli("invoice");
 
+  // Find beli payment linked to beli invoice or pfi
+  const payParent = invoice?.id ?? pfi?.id;
+  const payment = payParent
+    ? documents.find(
+        (d) => d.type === "payment" && d.parent_doc_id === payParent && d.status !== "cancelled",
+      )
+    : undefined;
+
   return [
     stepFromDoc("po", "PO", po),
     stepFromDoc("proforma_invoice", "PFI", pfi),
     stepFromDoc("pickup", "PKP", pickup),
     stepFromDoc("invoice", "INV", invoice),
+    stepFromDoc("payment", "PAY", payment),
   ];
 }
 
@@ -191,18 +210,12 @@ function buildChainBeli(): ChainStep[] {
  * Walks the Jual chain to find linked payment documents.
  *   - No invoice yet → "belum" (Belum Ditagih)
  *   - Invoice exists, no payment doc → "belum" (Belum Bayar)
- *   - Payment doc exists, draft → "proses" (Proses)
- *   - Payment doc exists, sent → "lunas" (Lunas)
- *
- * For mockup v1: simple lookup by parent_doc_id chain.
- * Future: match by amount (partial payment → "sebagian").
+ *   - Payment doc exists, uses paymentStore logic for accurate status
  */
 function resolvePaymentStatus(
   soId: string,
-  _invoiceDocNo: string | undefined,
-): { status: "lunas" | "sebagian" | "proses" | "belum"; label: string } {
-  // Find any payment doc linked to the SO or its chain children.
-  // Walk: SO → PFI → Delivery → Invoice → Payment
+): { status: string; label: string; css: string } {
+  // Walk chain to find invoice
   const pfi = findChildDoc(soId, "proforma_invoice", "jual");
   const delivery = pfi
     ? findChildDoc(pfi.id, "delivery", "jual")
@@ -215,19 +228,53 @@ function resolvePaymentStatus(
 
   // No invoice yet — not yet billable.
   if (!invoice) {
-    return { status: "belum", label: "Belum Ditagih" };
+    return { status: "belum", label: "Belum Ditagih", css: "deal-pay__badge--belum" };
   }
 
   // Check if a payment doc exists linked to the invoice.
   const payment = documents.find(
-    (d) => d.type === "payment" && d.direction === "jual" && d.parent_doc_id === invoice.id,
+    (d) => d.type === "payment" && d.direction === "jual" && d.parent_doc_id === invoice.id && d.status !== "cancelled",
   );
 
   if (!payment) {
-    return { status: "belum", label: "Belum Bayar" };
+    return { status: "belum", label: "Belum Bayar", css: "deal-pay__badge--belum" };
   }
-  if (payment.status === "sent") {
-    return { status: "lunas", label: "Lunas" };
+
+  // Derive status from payment document fields
+  const payChannel = payment.pay_channel
+    || (payment.giro_no ? "giro" : payment.payment_method === "cash" ? "tunai" : "tempo");
+  const isCash = payChannel === "tunai" || payChannel === "transfer";
+  const isGiroCek = payChannel === "giro" || payChannel === "cek";
+
+  if (payment.status === "draft") {
+    return { status: "proses", label: "Proses", css: "deal-pay__badge--proses" };
   }
-  return { status: "proses", label: "Proses" };
+  if (payment.status === "cancelled") {
+    return { status: "bad_debt", label: "Bad Debt", css: "deal-pay__badge--bad_debt" };
+  }
+
+  if (isCash) {
+    return { status: "lunas", label: "Lunas", css: "deal-pay__badge--lunas" };
+  }
+
+  if (isGiroCek) {
+    if (payment.giro_cair_date) {
+      return { status: "lunas", label: "Cair", css: "deal-pay__badge--lunas" };
+    }
+    return { status: "proses", label: "Proses", css: "deal-pay__badge--proses" };
+  }
+
+  // Tempo
+  if (payment.due_date) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(payment.due_date + "T00:00:00");
+    const diff = Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff > 0) {
+      return { status: "telat", label: `Telat ${diff} Hari`, css: "deal-pay__badge--telat" };
+    }
+    return { status: "lunas", label: "Lunas", css: "deal-pay__badge--lunas" };
+  }
+
+  return { status: "proses", label: "Proses", css: "deal-pay__badge--proses" };
 }

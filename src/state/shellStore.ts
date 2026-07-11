@@ -48,6 +48,7 @@ export function shellStore(): ShellStore {
     get label(): string {
       const labels: Record<string, string> = {
         "deal-tracker": "Deal Tracker",
+        payments: "PEMBAYARAN",
         parties: "PARTIES",
         upload: "UPLOAD",
         signature: "SIGNATURE",
@@ -62,9 +63,11 @@ export function shellStore(): ShellStore {
       };
       const base = labels[this.activeView] ?? "—";
       if (this.activeView === "deal-tracker") return base;
+      if (this.activeView === "payments") return base;
       if (this.activeView === "parties") return base;
       if (this.activeView === "upload") return base;
       if (this.activeView === "signature") return base;
+      if (this.activeView === "items") return base;
       if (this.activeView === "quotation" || this.activeView === "po" || this.activeView === "payment" || this.activeView === "sales_order") {
         return base;
       }

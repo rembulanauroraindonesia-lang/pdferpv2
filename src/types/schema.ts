@@ -165,6 +165,14 @@ export interface Document {
   delivery_driver_name?: string;   // nama supir
   delivery_driver_phone?: string;  // no kontak supir
 
+  // Payment-specific fields (used by type: "payment" documents):
+  payment_amount?: number;         // jumlah yang dibayar
+  pay_channel?: string;            // "tunai" | "transfer" | "giro" | "cek" | "tempo"
+  payment_ref?: string;            // no. referensi (bukti transfer, giro, cek)
+  payment_date?: string;           // ISO tanggal pembayaran
+  payment_notes?: string;          // catatan pembayaran
+  giro_created_date?: string;      // ISO tanggal giro/cek dibuat/diterbitkan
+
   // Catatan: subtotal/ppn/grand_total TIDAK ada di sini — derived dari lines.
   // Lihat src/lib/calc.ts.
 }

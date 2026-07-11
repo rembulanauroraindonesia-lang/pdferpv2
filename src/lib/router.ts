@@ -21,7 +21,7 @@ export function parseHash(): Route {
   const parts = hash.split("/").filter(Boolean);
 
   // Special views (no docId)
-  const specialViews = ["deal-tracker", "parties", "signature", "upload"];
+  const specialViews = ["deal-tracker", "payments", "parties", "signature", "upload", "items"];
   if (parts.length === 1 && specialViews.includes(parts[0])) {
     return { view: parts[0], direction: "jual", docId: "" };
   }
@@ -38,7 +38,7 @@ export function parseHash(): Route {
 }
 
 export function buildHash(view: string, direction: DocDirection, docId: string): string {
-  if (["deal-tracker", "parties", "signature", "upload"].includes(view)) {
+  if (["deal-tracker", "payments", "parties", "signature", "upload", "items"].includes(view)) {
     return `#/${view}`;
   }
   const hash = `#/${view.replace(/_/g, "-")}/${direction}`;
@@ -59,10 +59,10 @@ function applyRoute(route: Route) {
   const shell = Alpine.store("shell") as any;
   const doc = Alpine.store("doc") as any;
 
-  const specialViews = ["deal-tracker", "parties", "signature", "upload"];
+  const specialViews = ["deal-tracker", "payments", "parties", "signature", "upload", "items"];
   if (specialViews.includes(route.view)) {
     shell.setActive(route.view, route.direction);
-    if (route.view === "deal-tracker") {
+    if (route.view === "deal-tracker" || route.view === "payments") {
       doc.optionsVisible = false;
     }
     // Trigger loadBody after a tick so stores are updated

@@ -2,16 +2,17 @@
   PARTIAL BODY: deal-tracker.html  (swapped into #doc-body by htmx)
   ----------------------------------------------------------------------------
   Dashboard — Deal Tracker. Card-based view of all locked Sales Orders.
-  Monitors Chain Jual (SO → PFI → Delivery → Invoice)
-  and Chain Beli (PO → PFI → Delivery → Invoice).
+  Monitors Chain Jual (SO → PFI → Delivery → Invoice → PAYMENT)
+  and Chain Beli (PO → PFI → Pickup → Invoice → PAYMENT).
   Shows real-time HPP, margin, and chain progress per deal.
+  Payment status is derived from the centralized Payment module.
 -->
 <div class="deal-tracker" x-data>
   <div class="deal-tracker__header">
     <h1 class="deal-tracker__title">Deal Tracker</h1>
     <p class="deal-tracker__sub">
-      Memantau deal dari Sales Order hingga Invoice. HPP dan margin dihitung
-      real-time dari dokumen yangterkait.
+      Memantau deal dari Sales Order hingga Pembayaran. HPP, margin, dan status
+      pembayaran dihitung real-time dari dokumen terkait.
     </p>
   </div>
 
@@ -84,10 +85,10 @@
           </div>
         </div>
 
-        <!-- Payment status -->
+        <!-- Payment status (large badge) -->
         <div class="deal-pay">
           <span class="deal-pay__label">Pembayaran</span>
-          <span class="deal-pay__badge" :class="'deal-pay__badge--' + deal.paymentStatus"
+          <span class="deal-pay__badge" :class="deal.paymentCss"
                 x-text="deal.paymentLabel"></span>
         </div>
       </div>

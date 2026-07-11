@@ -15,7 +15,7 @@
           <div class="brand__mark">R</div>
           <div class="brand__name">
             Rembulan Aurora
-            <span>ERP · v0.5.0</span>
+            <span>ERP · v0.6.0</span>
           </div>
         </div>
 
@@ -83,10 +83,14 @@
                @click.prevent="$store.doc.setType('invoice', 'beli'); $store.shell.setActive('invoice', 'beli')">
               <span class="nav__icon">I</span> Invoice
             </a>
-            <a class="nav__link" data-view="payment" data-direction="beli"
-               href="#"
-               @click.prevent="$store.doc.setType('payment', 'beli'); $store.shell.setActive('payment', 'beli')">
-              <span class="nav__icon">$</span> Bukti Pembayaran
+          </div>
+
+          <!-- ════ PEMBAYARAN ══════════════════════════════════════════ -->
+          <div class="nav__group">
+            <div class="nav__label">Pembayaran</div>
+            <a class="nav__link" data-view="payments" data-direction="jual" href="#"
+               @click.prevent="$store.shell.setActive('payments', 'jual'); $store.doc.optionsVisible = false; documentView().loadBody()">
+              <span class="nav__icon">$</span> Pembayaran
             </a>
           </div>
 

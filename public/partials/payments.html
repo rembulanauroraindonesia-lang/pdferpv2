@@ -1,0 +1,431 @@
+<!--
+  PARTIAL BODY: payments.html  (swapped into #doc-body by htmx)
+  ----------------------------------------------------------------------------
+  Pembayaran — centralized payment dashboard.
+  Manages ALL payments for both Penjualan and Pembelian chains.
+  Each payment links to a PFI or Invoice and tracks Syarat Bayar, Bukti Bayar,
+  and Status (Lunas / Cair / Ditolak / Telat / Bad Debt / Proses / Draft).
+-->
+<div class="payments-view" x-data>
+
+  <!-- ═══════════════════ HEADER ═══════════════════ -->
+  <div class="payments-view__header">
+    <div>
+      <h1 class="payments-view__title">PEMBAYARAN</h1>
+      <p class="payments-view__sub">Mengelola pembayaran penjualan dan pembelian sesuai Syarat Bayar</p>
+    </div>
+    <div class="payments-view__actions">
+      <span class="payments-view__count" x-text="$store.payment.entryCount + ' transaksi'"></span>
+      <button class="payments-view__add" @click="$store.payment.openModal()">
+        + Pembayaran Baru
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ FILTERS ═══════════════════ -->
+  <div class="payments-view__filters">
+    <select class="pay-filter" x-model="$store.payment.filterDirection">
+      <option value="">Semua Arah</option>
+      <option value="jual">Penjualan</option>
+      <option value="beli">Pembelian</option>
+    </select>
+    <select class="pay-filter" x-model="$store.payment.filterStatus">
+      <option value="">Semua Status</option>
+      <option value="draft">Draft</option>
+      <option value="proses">Proses</option>
+      <option value="lunas">Lunas</option>
+      <option value="cair">Cair</option>
+      <option value="ditolak">Ditolak</option>
+      <option value="telat">Telat</option>
+      <option value="bad_debt">Bad Debt</option>
+    </select>
+    <input class="pay-filter pay-filter--search" type="text"
+           x-model="$store.payment.filterSearch"
+           placeholder="Cari no. dokumen, pihak..." />
+    <span class="payments-view__filtered"
+          x-show="$store.payment.filterDirection || $store.payment.filterStatus || $store.payment.filterSearch"
+          x-text="$store.payment.filteredCount + ' ditampilkan'"></span>
+  </div>
+
+  <!-- ═══════════════════ EMPTY STATE ═══════════════════ -->
+  <template x-if="$store.payment.filteredEntries.length === 0">
+    <div class="payments-view__empty">
+      <div class="payments-view__empty-icon">$</div>
+      <p class="payments-view__empty-title">Belum ada pembayaran</p>
+      <p class="payments-view__empty-hint">Klik "+ Pembayaran Baru" untuk membuat transaksi pembayaran.</p>
+    </div>
+  </template>
+
+  <!-- ═══════════════════ TABLE ═══════════════════ -->
+  <div class="payments-view__table-wrap" x-show="$store.payment.filteredEntries.length > 0">
+    <table class="payments-view__table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Tanggal</th>
+          <th>Arah</th>
+          <th>Pihak</th>
+          <th>Dokumen Terkait</th>
+          <th>Syarat Bayar</th>
+          <th>Jumlah</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(e, i) in $store.payment.filteredEntries" :key="e.id">
+          <tr class="pay-row" :class="'pay-row--' + e.status">
+            <!-- No -->
+            <td class="pay-row__no" x-text="i + 1"></td>
+            <!-- Tanggal -->
+            <td class="pay-row__date" x-text="$store.payment.fmtDate(e.date)"></td>
+            <!-- Arah -->
+            <td>
+              <span class="pay-dir" :class="'pay-dir--' + e.direction"
+                    x-text="e.direction === 'jual' ? 'Jual' : 'Beli'"></span>
+            </td>
+            <!-- Pihak -->
+            <td class="pay-row__party" x-text="e.partyName"></td>
+            <!-- Dokumen Terkait -->
+            <td class="pay-row__linked">
+              <div class="pay-linked-doc" x-text="e.linkedDocNo"></div>
+              <small class="pay-linked-type" x-text="e.linkedDocTypeName"></small>
+            </td>
+            <!-- Syarat Bayar -->
+            <td class="pay-row__terms">
+              <div class="pay-terms">
+                <span class="pay-terms__cat" :class="'pay-terms__cat--' + e.termCategory"
+                      x-text="e.termCategory === 'cash' ? 'Cash' : 'Credit'"></span>
+                <span class="pay-terms__channel" x-text="e.payChannelLabel"></span>
+                <template x-if="e.termCategory === 'credit' && e.netDays > 0">
+                  <span class="pay-terms__days" x-text="'Nett ' + e.netDays + ' Hari'"></span>
+                </template>
+              </div>
+              <!-- Giro/Cek detail snippet -->
+              <template x-if="(e.payChannel === 'giro' || e.payChannel === 'cek') && e.giroNo">
+                <div class="pay-terms__giro-info">
+                  <span x-text="e.giroNo"></span>
+                  <template x-if="e.giroBank"><span> · <span x-text="e.giroBank"></span></span></template>
+                </div>
+              </template>
+              <!-- Tempo due date -->
+              <template x-if="e.payChannel === 'tempo' && e.dueDate">
+                <div class="pay-terms__tempo-info">
+                  <span>Jth. Tempo: </span>
+                  <span x-text="$store.payment.fmtDate(e.dueDate)"></span>
+                </div>
+              </template>
+            </td>
+            <!-- Jumlah -->
+            <td class="pay-row__amount">
+              <div class="pay-amount" x-text="'Rp ' + $store.payment.fmtMoney(e.invoiceTotal)"></div>
+              <template x-if="e.amountPaid !== e.invoiceTotal && e.amountPaid > 0">
+                <div class="pay-amount-paid" x-text="'Dibayar: Rp ' + $store.payment.fmtMoney(e.amountPaid)"></div>
+              </template>
+            </td>
+            <!-- Status -->
+            <td class="pay-row__status">
+              <span class="pay-status-badge" :class="'pay-status-badge--' + e.status"
+                    x-text="e.statusLabel"></span>
+            </td>
+            <!-- Aksi -->
+            <td class="pay-row__actions">
+              <button class="pay-act pay-act--edit" @click="$store.payment.openModal(e.id)" title="Edit">✏</button>
+              <button class="pay-act pay-act--del" @click="$store.payment.removeEntry(e.id)" title="Hapus">✕</button>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════ MODAL ═══════════════════ -->
+  <template x-if="$store.payment.modalOpen">
+    <div class="pay-modal-overlay" @click.self="$store.payment.closeModal()" x-transition.opacity>
+      <div class="pay-modal" x-transition>
+        <!-- Modal Header -->
+        <div class="pay-modal__head">
+          <h3 x-text="$store.payment.editingId ? 'Edit Pembayaran' : 'Pembayaran Baru'"></h3>
+          <button class="pay-modal__close" @click="$store.payment.closeModal()">✕</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="pay-modal__body">
+          <!-- Step 1: Direction -->
+          <div class="pay-form-section">
+            <div class="pay-form-label">Jenis Transaksi</div>
+            <div class="pay-form-dir">
+              <button class="pay-dir-btn" :class="{ 'pay-dir-btn--active': $store.payment.form.direction === 'jual' }"
+                      @click="$store.payment.form.direction = 'jual'">
+                <span class="pay-dir-btn__icon">↑</span> Penjualan
+              </button>
+              <button class="pay-dir-btn" :class="{ 'pay-dir-btn--active': $store.payment.form.direction === 'beli' }"
+                      @click="$store.payment.form.direction = 'beli'">
+                <span class="pay-dir-btn__icon">↓</span> Pembelian
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Linked Document -->
+          <div class="pay-form-section">
+            <div class="pay-form-label">Hubungkan Dokumen</div>
+            <select class="pay-form-select" x-model="$store.payment.form.linkedDocId">
+              <option value="">— Pilih Proforma Invoice / Invoice —</option>
+              <template x-for="ld in $store.payment.linkableDocs" :key="ld.id">
+                <option :value="ld.id"
+                        x-text="ld.docNo + ' (' + ld.typeName + ') — ' + ld.partyName + ' — Rp ' + ld.totalLabel">
+                </option>
+              </template>
+            </select>
+            <!-- Show linked doc info -->
+            <template x-if="$store.payment.selectedLinkedDoc">
+              <div class="pay-form-linked-info">
+                <span>Pihak: <b x-text="$store.payment.selectedLinkedDoc.partyName"></b></span>
+                <span>Tanggal: <b x-text="$store.payment.selectedLinkedDoc.dateLabel"></b></span>
+                <span>Tagihan: <b x-text="'Rp ' + $store.payment.selectedLinkedDoc.totalLabel"></b></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Divider -->
+          <div class="pay-form-divider">Syarat Bayar</div>
+
+          <!-- Step 3: Term Category -->
+          <div class="pay-form-section">
+            <div class="pay-form-label">Kategori</div>
+            <div class="pay-form-cat">
+              <button class="pay-cat-btn" :class="{ 'pay-cat-btn--active': $store.payment.form.termCategory === 'cash' }"
+                      @click="$store.payment.form.termCategory = 'cash'">
+                Cash
+              </button>
+              <button class="pay-cat-btn" :class="{ 'pay-cat-btn--active': $store.payment.form.termCategory === 'credit' }"
+                      @click="$store.payment.form.termCategory = 'credit'">
+                Credit (Nett)
+              </button>
+            </div>
+          </div>
+
+          <!-- ── CASH SUB-FORM ── -->
+          <template x-if="$store.payment.form.termCategory === 'cash'">
+            <div class="pay-form-section">
+              <div class="pay-form-label">Metode Pembayaran</div>
+              <div class="pay-form-cat">
+                <button class="pay-cat-btn" :class="{ 'pay-cat-btn--active': $store.payment.form.cashMethod === 'tunai' }"
+                        @click="$store.payment.form.cashMethod = 'tunai'">
+                  Tunai
+                </button>
+                <button class="pay-cat-btn" :class="{ 'pay-cat-btn--active': $store.payment.form.cashMethod === 'transfer' }"
+                        @click="$store.payment.form.cashMethod = 'transfer'">
+                  Transfer
+                </button>
+              </div>
+
+              <!-- Cash: common fields -->
+              <div class="pay-form-row" style="margin-top: 12px">
+                <label class="pay-form-field">
+                  <span>Tanggal Bayar</span>
+                  <input type="date" x-model="$store.payment.form.startDate" />
+                </label>
+                <label class="pay-form-field">
+                  <span>No. Referensi</span>
+                  <input type="text" x-model="$store.payment.form.paymentRef"
+                         placeholder="No. bukti / kwitansi" />
+                </label>
+              </div>
+
+              <!-- Tunai: upload tanda terima -->
+              <template x-if="$store.payment.form.cashMethod === 'tunai'">
+                <div class="pay-form-upload">
+                  <div class="pay-form-label" style="margin-bottom:6px">Bukti Bayar — Tanda Terima</div>
+                  <input type="text" x-model="$store.payment.form.proofFile"
+                         placeholder="Upload tanda terima (nama file)" />
+                </div>
+              </template>
+
+              <!-- Transfer: upload bukti transfer + info -->
+              <template x-if="$store.payment.form.cashMethod === 'transfer'">
+                <div class="pay-form-upload">
+                  <div class="pay-form-label" style="margin-bottom:6px">Bukti Bayar — Transfer</div>
+                  <input type="text" x-model="$store.payment.form.proofFile"
+                         placeholder="Upload bukti transfer (nama file)" />
+                  <div class="pay-form-row" style="margin-top:8px">
+                    <label class="pay-form-field">
+                      <span>Bank Pengirim</span>
+                      <input type="text" x-model="$store.payment.form.giroBank"
+                             placeholder="e.g. BCA, Mandiri" />
+                    </label>
+                    <label class="pay-form-field">
+                      <span>No. Referensi Transfer</span>
+                      <input type="text" x-model="$store.payment.form.paymentRef"
+                             placeholder="No. bukti transfer" />
+                    </label>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- ── CREDIT SUB-FORM ── -->
+          <template x-if="$store.payment.form.termCategory === 'credit'">
+            <div class="pay-form-section">
+              <!-- NETT days -->
+              <div class="pay-form-row">
+                <label class="pay-form-field">
+                  <span>Nett (Hari)</span>
+                  <input type="number" min="1" max="365"
+                         x-model.number="$store.payment.form.netDays" />
+                </label>
+              </div>
+
+              <div class="pay-form-label" style="margin-top:8px">Metode Credit</div>
+              <div class="pay-form-cat">
+                <button class="pay-cat-btn" :class="{ 'pay-cat-btn--active': $store.payment.form.creditMethod === 'giro' }"
+                        @click="$store.payment.form.creditMethod = 'giro'">
+                  Giro
+                </button>
+                <button class="pay-cat-btn" :class="{ 'pay-cat-btn--active': $store.payment.form.creditMethod === 'cek' }"
+                        @click="$store.payment.form.creditMethod = 'cek'">
+                  Cek
+                </button>
+                <button class="pay-cat-btn" :class="{ 'pay-cat-btn--active': $store.payment.form.creditMethod === 'tempo' }"
+                        @click="$store.payment.form.creditMethod = 'tempo'">
+                  Tempo
+                </button>
+              </div>
+
+              <!-- GIRO / CEK detail form -->
+              <template x-if="$store.payment.form.creditMethod === 'giro' || $store.payment.form.creditMethod === 'cek'">
+                <div class="pay-form-giro" style="margin-top:12px">
+                  <div class="pay-form-sublabel"
+                       x-text="$store.payment.form.creditMethod === 'giro' ? 'Detail Giro' : 'Detail Cek'"></div>
+                  <div class="pay-form-row">
+                    <label class="pay-form-field">
+                      <span x-text="'Nomor ' + ($store.payment.form.creditMethod === 'giro' ? 'Giro' : 'Cek')"></span>
+                      <input type="text" x-model="$store.payment.form.giroNo"
+                             :placeholder="'Nomor ' + ($store.payment.form.creditMethod === 'giro' ? 'Giro' : 'Cek')" />
+                    </label>
+                    <label class="pay-form-field">
+                      <span>Bank Penerbit</span>
+                      <input type="text" x-model="$store.payment.form.giroBank"
+                             placeholder="Nama bank" />
+                    </label>
+                  </div>
+                  <div class="pay-form-row" style="margin-top:8px">
+                    <label class="pay-form-field">
+                      <span>Nominal</span>
+                      <input type="text" inputmode="numeric"
+                             x-model="$store.payment.form.giroAmount"
+                             placeholder="0"
+                             @focus="$el.value = $el.value.replace(/\./g,'')"
+                             @blur="$el.value = Number($el.value||0).toLocaleString('id-ID')" />
+                    </label>
+                  </div>
+                  <div class="pay-form-row" style="margin-top:8px">
+                    <label class="pay-form-field">
+                      <span>Tanggal Dibuat</span>
+                      <input type="date" x-model="$store.payment.form.giroCreatedDate" />
+                    </label>
+                    <label class="pay-form-field">
+                      <span>Tanggal Jatuh Tempo</span>
+                      <input type="date" x-model="$store.payment.form.giroDueDate" />
+                    </label>
+                  </div>
+                  <!-- Upload scan -->
+                  <div class="pay-form-upload" style="margin-top:8px">
+                    <div class="pay-form-sublabel"
+                         x-text="'Upload Scan ' + ($store.payment.form.creditMethod === 'giro' ? 'Giro' : 'Cek')"></div>
+                    <input type="text" x-model="$store.payment.form.proofFile"
+                           :placeholder="'Upload scan ' + ($store.payment.form.creditMethod === 'giro' ? 'giro' : 'cek') + ' (nama file)'" />
+                  </div>
+                </div>
+              </template>
+
+              <!-- TEMPO detail form -->
+              <template x-if="$store.payment.form.creditMethod === 'tempo'">
+                <div class="pay-form-tempo" style="margin-top:12px">
+                  <div class="pay-form-sublabel">Detail Tempo</div>
+                  <div class="pay-form-row">
+                    <label class="pay-form-field">
+                      <span>Tanggal Mulai</span>
+                      <input type="date" x-model="$store.payment.form.startDate" />
+                    </label>
+                    <label class="pay-form-field">
+                      <span>Tanggal Jatuh Tempo</span>
+                      <input type="date" x-model="$store.payment.form.dueDate" />
+                    </label>
+                  </div>
+                  <div class="pay-form-hint"
+                       x-show="$store.payment.form.startDate && $store.payment.form.netDays > 0 && !$store.payment.form.dueDate"
+                       x-text="'Jatuh tempo otomatis: ' + $store.payment.form.netDays + ' hari dari ' + $store.payment.fmtDate($store.payment.form.startDate)">
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- Divider -->
+          <div class="pay-form-divider">Detail Pembayaran</div>
+
+          <!-- Amount + Notes -->
+          <div class="pay-form-section">
+            <div class="pay-form-row">
+              <label class="pay-form-field pay-form-field--amount">
+                <span>Jumlah Dibayar</span>
+                <div class="pay-form-amount-wrap">
+                  <span class="pay-form-amount-prefix">Rp</span>
+                  <input type="text" inputmode="numeric" class="pay-form-amount-input"
+                         x-model="$store.payment.form.amountPaid"
+                         placeholder="0"
+                         @focus="$el.value = $el.value.replace(/\./g,'')"
+                         @blur="$el.value = Number($el.value||0).toLocaleString('id-ID')" />
+                </div>
+                <template x-if="$store.payment.selectedLinkedDoc">
+                  <small class="pay-form-amount-hint"
+                         x-text="'Tagihan: Rp ' + $store.payment.selectedLinkedDoc.totalLabel"></small>
+                </template>
+              </label>
+            </div>
+            <div class="pay-form-row" style="margin-top:8px">
+              <label class="pay-form-field" style="flex:1">
+                <span>Catatan</span>
+                <textarea rows="2" x-model="$store.payment.form.notes"
+                          placeholder="Catatan pembayaran..."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <!-- Status change (only when editing) -->
+          <template x-if="$store.payment.editingId">
+            <div>
+              <div class="pay-form-divider">Ubah Status</div>
+              <div class="pay-form-section">
+                <div class="pay-form-row">
+                  <label class="pay-form-field">
+                    <span>Status</span>
+                    <select class="pay-form-select"
+                            @change="$store.payment.updateStatus($store.payment.editingId!, $el.value)">
+                      <template x-for="s in $store.payment.availableStatuses" :key="s.value">
+                        <option :value="s.value" x-text="s.label"></option>
+                      </template>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="pay-modal__foot">
+          <button class="pay-modal__btn pay-modal__btn--ghost" @click="$store.payment.closeModal()">Batal</button>
+          <button class="pay-modal__btn pay-modal__btn--primary"
+                  :disabled="!$store.payment.form.linkedDocId"
+                  @click="$store.payment.saveEntry()">
+            <span x-text="$store.payment.editingId ? 'Simpan' : 'Buat Pembayaran'"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+</div>
