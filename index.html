@@ -15,7 +15,7 @@
           <div class="brand__mark">R</div>
           <div class="brand__name">
             Rembulan Aurora
-            <span>ERP · v0.3 mockup</span>
+            <span>ERP · v0.5.0</span>
           </div>
         </div>
 
@@ -38,22 +38,22 @@
                @click.prevent="$store.doc.setType('quotation', 'jual'); $store.shell.setActive('quotation', 'jual')">
               <span class="nav__icon">Q</span> Penawaran
             </a>
-            <a class="nav__link" data-view="sales_order" data-direction="jual" data-stub
+            <a class="nav__link" data-view="sales_order" data-direction="jual"
                href="#"
                @click.prevent="$store.doc.setType('sales_order', 'jual'); $store.shell.setActive('sales_order', 'jual')">
               <span class="nav__icon">S</span> Sales Order
             </a>
-            <a class="nav__link" data-view="proforma_invoice" data-direction="jual" data-stub
+            <a class="nav__link" data-view="proforma_invoice" data-direction="jual"
                href="#"
                @click.prevent="$store.doc.setType('proforma_invoice', 'jual'); $store.shell.setActive('proforma_invoice', 'jual')">
               <span class="nav__icon">F</span> Proforma Invoice
             </a>
-            <a class="nav__link" data-view="delivery" data-direction="jual" data-stub
+            <a class="nav__link" data-view="delivery" data-direction="jual"
                href="#"
                @click.prevent="$store.doc.setType('delivery', 'jual'); $store.shell.setActive('delivery', 'jual')">
               <span class="nav__icon">D</span> Surat Jalan
             </a>
-            <a class="nav__link" data-view="invoice" data-direction="jual" data-stub
+            <a class="nav__link" data-view="invoice" data-direction="jual"
                href="#"
                @click.prevent="$store.doc.setType('invoice', 'jual'); $store.shell.setActive('invoice', 'jual')">
               <span class="nav__icon">I</span> Invoice
@@ -63,25 +63,30 @@
           <!-- ════ PEMBELIAN ════════════════════════════════════════════ -->
           <div class="nav__group">
             <div class="nav__label">Pembelian</div>
-            <a class="nav__link" data-view="po" data-direction="beli" data-stub
+            <a class="nav__link" data-view="po" data-direction="beli"
                href="#"
                @click.prevent="$store.doc.setType('po', 'beli'); $store.shell.setActive('po', 'beli')">
               <span class="nav__icon">P</span> Purchase Order
             </a>
-            <a class="nav__link" data-view="proforma_invoice" data-direction="beli" data-stub
+            <a class="nav__link" data-view="proforma_invoice" data-direction="beli"
                href="#"
                @click.prevent="$store.doc.setType('proforma_invoice', 'beli'); $store.shell.setActive('proforma_invoice', 'beli')">
               <span class="nav__icon">F</span> Proforma Invoice
             </a>
-            <a class="nav__link" data-view="pickup" data-direction="beli" data-stub
+            <a class="nav__link" data-view="pickup" data-direction="beli"
                href="#"
                @click.prevent="$store.doc.setType('pickup', 'beli'); $store.shell.setActive('pickup', 'beli')">
               <span class="nav__icon">P</span> Pick Up
             </a>
-            <a class="nav__link" data-view="invoice" data-direction="beli" data-stub
+            <a class="nav__link" data-view="invoice" data-direction="beli"
                href="#"
                @click.prevent="$store.doc.setType('invoice', 'beli'); $store.shell.setActive('invoice', 'beli')">
               <span class="nav__icon">I</span> Invoice
+            </a>
+            <a class="nav__link" data-view="payment" data-direction="beli"
+               href="#"
+               @click.prevent="$store.doc.setType('payment', 'beli'); $store.shell.setActive('payment', 'beli')">
+              <span class="nav__icon">$</span> Bukti Pembayaran
             </a>
           </div>
 
@@ -97,7 +102,9 @@
             <a class="nav__link" data-view="signature" data-direction="jual" href="#"
                @click.prevent="$store.shell.setActive('signature','jual'); $store.doc.optionsVisible = false; documentView().loadBody()">
               <span class="nav__icon">✍</span> SIGNATURE</a>
-            <a class="nav__link" data-stub href="#"><span class="nav__icon">▤</span> Item / Katalog</a>
+            <a class="nav__link" data-view="items" data-direction="jual" href="#"
+               @click.prevent="$store.shell.setActive('items','jual'); $store.doc.optionsVisible = false; documentView().loadBody()">
+              <span class="nav__icon">▤</span> Item / Katalog</a>
           </div>
         </nav>
 

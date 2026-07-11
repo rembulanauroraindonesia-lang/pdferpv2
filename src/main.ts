@@ -40,6 +40,7 @@ import { linesByDocument } from "@/data/documentLines";
 import { partyById } from "@/data/parties";
 import { partiesStore } from "@/state/partiesStore";
 import { signatureStore } from "@/state/signatureStore";
+import { itemsStore } from "@/state/itemsStore";
 import { companyById } from "@/data/companies";
 import { signatoryById } from "@/data/signatories";
 import { termsByDocument } from "@/data/terms";
@@ -87,6 +88,7 @@ Alpine.store("shell", shellStore());
 Alpine.store("deal", dealStore());
 Alpine.store("parties", partiesStore());
 Alpine.store("signatures", signatureStore());
+Alpine.store("items", itemsStore());
 
 // ── Register Alpine x-data factories (globals for partials) ──────
 window.documentView = makeDocumentView(Alpine);

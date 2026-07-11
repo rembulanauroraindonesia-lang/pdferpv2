@@ -21,6 +21,7 @@ import {
   fetchBankAccounts,
   fetchStaff,
   fetchItems,
+  fetchTerms,
   saveParty,
   saveSignatory,
 } from "./api";
@@ -32,13 +33,14 @@ import { signatories } from "@/data/signatories";
 import { bankAccounts } from "@/data/bankAccounts";
 import { staff } from "@/data/staff";
 import { items } from "@/data/items";
+import { terms } from "@/data/terms";
 import type { Party, Signatory } from "@/types/schema";
 
 /** Load all data from PocketBase into in-memory arrays */
 export async function loadFromDB(): Promise<boolean> {
   if (!usePocketBase()) return false;
   try {
-    const [docs, lines, pts, cos, sigs, bas, sts, itms] = await Promise.all([
+    const [docs, lines, pts, cos, sigs, bas, sts, itms, trms] = await Promise.all([
       fetchDocuments(),
       fetchDocumentLines(""),
       fetchParties(),
@@ -47,6 +49,7 @@ export async function loadFromDB(): Promise<boolean> {
       fetchBankAccounts(),
       fetchStaff(),
       fetchItems(),
+      fetchTerms(),
     ]);
 
     // Replace in-memory arrays (keep references — same array objects)
@@ -73,6 +76,9 @@ export async function loadFromDB(): Promise<boolean> {
 
     items.length = 0;
     items.push(...itms);
+
+    terms.length = 0;
+    terms.push(...trms);
 
     console.log(
       `[DB] Loaded: ${docs.length} docs, ${lines.length} lines, ${pts.length} parties, ${itms.length} items`,

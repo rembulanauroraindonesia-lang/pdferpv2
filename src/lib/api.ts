@@ -11,6 +11,7 @@
 import { pb, usePocketBase } from "./db";
 import type { Document, DocumentLine, Party, Company, Item, Signatory, BankAccount } from "@/types/schema";
 import type { Staff } from "@/data/staff";
+import type { Term } from "@/types/schema";
 
 // ── Documents ──────────────────────────────────────────────────────────────────
 
@@ -84,10 +85,14 @@ export async function saveDocument(doc: Document): Promise<string> {
 
 // ── Document Lines ─────────────────────────────────────────────────────────────
 
-export async function fetchDocumentLines(_docId: string): Promise<DocumentLine[]> {
+export async function fetchDocumentLines(docId: string): Promise<DocumentLine[]> {
   if (!usePocketBase()) return [];
   try {
-    const records = await pb.collection("document_lines").getFullList({ sort: "line_no" });
+    const filter = docId ? `document='${docId}'` : "";
+    const records = await pb.collection("document_lines").getFullList({
+      sort: "line_no",
+      ...(filter ? { filter } : {}),
+    });
     return records.map((r) => ({
       id: r.id,
       document_id: r.document as string,
@@ -305,6 +310,24 @@ export async function fetchStaff(): Promise<Staff[]> {
     })) as Staff[];
   } catch (err) {
     console.error("[API] fetchStaff failed:", err);
+    return [];
+  }
+}
+
+// ── Terms ─────────────────────────────────────────────────────────────────────
+
+export async function fetchTerms(): Promise<Term[]> {
+  if (!usePocketBase()) return [];
+  try {
+    const records = await pb.collection("terms").getFullList({ sort: "seq" });
+    return records.map((r) => ({
+      id: r.id,
+      document_id: r.document_id as string,
+      seq: r.seq as number,
+      body: r.body as string,
+    })) as Term[];
+  } catch (err) {
+    console.error("[API] fetchTerms failed:", err);
     return [];
   }
 }

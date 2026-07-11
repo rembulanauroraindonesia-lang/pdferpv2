@@ -2330,3 +2330,92 @@ body.map-on .doc__lines th { position: relative; padding-top: 18px; }
     opacity: 1 !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ITEMS VIEW (master data / katalog)
+   ───────────────────────────────────────────────────────────────────────────── */
+.items-view {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.items-view__search {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  width: 220px;
+  outline: none;
+  background: var(--field-bg, #fff);
+}
+.items-view__search:focus {
+  border-color: var(--accent, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.items-view__table-wrap {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.items-view__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.items-view__table thead {
+  background: var(--bg, #f8fafc);
+}
+.items-view__table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted, #64748b);
+  border-bottom: 1px solid var(--border);
+}
+.items-view__table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.items-view__table tbody tr:last-child td {
+  border-bottom: none;
+}
+.items-view__table tbody tr:hover {
+  background: var(--hover-bg, #f1f5f9);
+}
+
+.items-view__code {
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  color: var(--muted, #64748b);
+}
+.items-view__code--empty {
+  color: var(--border);
+}
+.items-view__name {
+  font-weight: 500;
+}
+.items-view__cat {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg, #f1f5f9);
+  font-size: 11px;
+  color: var(--muted, #64748b);
+}
+.items-view__unit {
+  font-weight: 500;
+  color: var(--text, #1e293b);
+}
+.items-view__actions {
+  display: flex;
+  gap: 4px;
+}

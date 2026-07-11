@@ -1,0 +1,124 @@
+<!--
+  PARTIAL: items.html  (loaded by htmx into #doc-body)
+  Master data CRUD — Items / Katalog barang & jasa.
+  Uses $store.items (ItemsStore).
+-->
+<div class="items-view">
+
+  <!-- Header -->
+  <div class="parties-view__header">
+    <div>
+      <h1 class="parties-view__title">ITEM / KATALOG</h1>
+      <span class="parties-view__count">
+        <span x-text="$store.items.list.length"></span> item
+      </span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="text" class="items-view__search" placeholder="Cari kode / nama / kategori..."
+             x-model="$store.items.search" />
+      <button class="pfi-beli__btn-approve" @click="$store.items.openModal(null)">+ Tambah Baru</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="items-view__table-wrap">
+    <table class="items-view__table">
+      <thead>
+        <tr>
+          <th style="width:100px">Kode</th>
+          <th>Nama Barang</th>
+          <th style="width:140px">Kategori</th>
+          <th style="width:80px">Satuan</th>
+          <th style="width:100px">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="item in $store.items.filtered" :key="item.id">
+          <tr>
+            <td>
+              <span class="items-view__code" x-text="item.code || '—'" :class="{ 'items-view__code--empty': !item.code }"></span>
+            </td>
+            <td>
+              <span class="items-view__name" x-text="item.name"></span>
+            </td>
+            <td>
+              <span class="items-view__cat" x-text="item.category || '—'"></span>
+            </td>
+            <td>
+              <span class="items-view__unit" x-text="item.unit"></span>
+            </td>
+            <td>
+              <div class="items-view__actions">
+                <button class="party-card__act" @click="$store.items.openModal(item)" title="Edit">✎</button>
+                <button class="party-card__act party-card__act--del" @click="$store.items.remove(item.id)" title="Hapus">✕</button>
+              </div>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+
+    <!-- Empty state -->
+    <template x-if="$store.items.filtered.length === 0">
+      <div class="parties-view__empty">
+        <div class="parties-view__empty-icon">📦</div>
+        <p class="parties-view__empty-text" x-text="$store.items.search ? 'Tidak ditemukan: ' + $store.items.search : 'Belum ada data item / katalog.'"></p>
+        <template x-if="!$store.items.search">
+          <button class="pfi-beli__btn-approve" @click="$store.items.openModal(null)">+ Tambah Baru</button>
+        </template>
+      </div>
+    </template>
+  </div>
+
+  <!-- ════════════════ MODAL: Add / Edit ════════════════ -->
+  <div class="party-modal-overlay" x-show="$store.items.modalOpen" x-transition x-cloak
+       @click.self="$store.items.closeModal()">
+    <div class="party-modal">
+      <div class="party-modal__head">
+        <h3 x-text="$store.items.editing ? 'Edit Item' : 'Tambah Item Baru'"></h3>
+        <button class="party-modal__close" @click="$store.items.closeModal()">✕</button>
+      </div>
+
+      <div class="party-modal__body">
+        <div class="party-modal__row">
+          <label class="qa__field">
+            <span>Kode / SKU</span>
+            <input type="text" x-model="$store.items.draft.code"
+                   @keydown.enter="$store.items.save()"
+                   placeholder="Opsional, misal: PK-12NC" />
+          </label>
+          <label class="qa__field">
+            <span>Satuan *</span>
+            <input type="text" x-model="$store.items.draft.unit"
+                   placeholder="Pcs / Batang / Lembar / Kg" />
+          </label>
+        </div>
+        <label class="qa__field">
+          <span>Nama Barang *</span>
+          <input type="text" x-model="$store.items.draft.name"
+                 @keydown.enter="$store.items.save()"
+                 placeholder="Plat Kapal 12mm x 8' x 30' Non Class" />
+        </label>
+        <label class="qa__field">
+          <span>Kategori</span>
+          <input type="text" x-model="$store.items.draft.category"
+                 placeholder="Plat Kapal / Besi Beton / Pipa / ..." />
+        </label>
+        <label class="qa__field">
+          <span>Catatan</span>
+          <input type="text" x-model="$store.items.draft.description"
+                 placeholder="Opsional" />
+        </label>
+      </div>
+
+      <div class="party-modal__foot">
+        <button class="qa__btn qa__btn--ghost" @click="$store.items.closeModal()">Batal</button>
+        <button class="qa__btn qa__btn--primary" @click="$store.items.save()"
+                :disabled="!$store.items.draft.name.trim() || !$store.items.draft.unit.trim()">
+          <span x-text="$store.items.editing ? 'Simpan' : 'Tambah'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

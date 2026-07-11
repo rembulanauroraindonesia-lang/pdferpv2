@@ -16,6 +16,7 @@ import { items } from "@/data/items";
 import { signatories } from "@/data/signatories";
 import { bankAccounts } from "@/data/bankAccounts";
 import { staff } from "@/data/staff";
+import { terms } from "@/data/terms";
 
 export async function seedIfNeeded(): Promise<void> {
   if (!usePocketBase()) return;
@@ -137,6 +138,15 @@ export async function seedIfNeeded(): Promise<void> {
         buy_per_unit: line.pricing?.buy_per_unit || 0,
         discount_pct: 0,
         line_total: line.qty * line.unit_price,
+      });
+    }
+
+    // Seed terms
+    for (const t of terms) {
+      await pb.collection("terms").create({
+        document_id: t.document_id,
+        seq: t.seq,
+        body: t.body,
       });
     }
 
